@@ -1,13 +1,10 @@
 import requests
 import cloudscraper
 import sqlite3
-import pandas as pd
 import jmespath
 from sqlite3 import Error
 from datetime import datetime, timezone
 import math
-import json
-import time
 
 def main():
     database = "./odds.db"
@@ -23,6 +20,7 @@ def main():
 
     # add and update new markets
     add_markets(conn, get_sports_int())
+    add_markets(conn, get_bet99())
 
 def create_conn(db_file):
     conn = None
@@ -35,44 +33,40 @@ def create_conn(db_file):
 
 def create_table(conn):
     cur = conn.cursor()
-    create = '''CREATE TABLE IF NOT EXISTS markets 
-                (market_id INT PRIMARY KEY NOT NULL, 
-                sportsbook TEXT, 
-                game TEXT, 
-                type TEXT,
-                period TEXT, 
-                date TEXT, 
-                home_team TEXT, 
-                away_team TEXT, 
-                home_payout FLOAT,
-                away_payout FLOAT, 
-                spov TEXT, 
-                spun TEXT)
-             '''
+    create = '''
+        CREATE TABLE IF NOT EXISTS markets 
+        (market_id INT PRIMARY KEY NOT NULL, 
+        sportsbook TEXT, 
+        game TEXT, 
+        type TEXT,
+        period TEXT, 
+        date TEXT, 
+        home_team TEXT, 
+        away_team TEXT, 
+        home_payout FLOAT,
+        away_payout FLOAT, 
+        spov TEXT, 
+        spun TEXT)
+    '''
     cur.execute(create)
 
 def add_markets(conn, markets):
     # https://www.sqlite.org/lang_UPSERT.html
     cur = conn.cursor()
-    upsert = '''INSERT INTO markets 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(market_id) 
-                DO UPDATE SET home_payout=excluded.home_payout, 
-                away_payout=excluded.away_payout,
-                spov=excluded.spov, 
-                spun=excluded.spun
-             '''
+    upsert = '''
+        INSERT INTO markets 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(market_id) 
+        DO UPDATE SET home_payout=excluded.home_payout, 
+        away_payout=excluded.away_payout,
+        spov=excluded.spov, 
+        spun=excluded.spun
+    '''
     cur.executemany(upsert, markets)
     conn.commit()
     return cur.lastrowid
 
 def remove_old_markets(conn):
-    """
-    Remove all markets that the current time has passed
-    :param conn:
-    :param market:
-    :return:
-    """
     cur = conn.cursor()
     remove_old = '''DELETE FROM markets
                     WHERE date < ?
@@ -136,69 +130,175 @@ def get_sports_int():
         games = resp['props']['games']
         for game in games:
             gamePath = game['gamePath']
-            game_urls.append('https://www.sportsinteraction.com' + gamePath)
+            game_urls.append(f"https://www.sportsinteraction.com{gamePath}")
+
+    sportsbook = "Sports Interaction"
+    period = 0  # only full game including OT 
+    dec = 3     # rounding down payouts
+    
+    # expressions
+    matchup_exp = "game.fullName"
+    date_exp = "game.date"
+    des_bets = ("gameData."
+                f"betTypeGroups[?contains({bet_type_query}, betTypeId)].")
+    bet_ids_exp = f"{des_bets}betTypeId"
+    market_ids_exp = f"{des_bets}betTypes[0].events[*].eventId"
+    payouts_exp = f"{des_bets}betTypes[0].events[*].runners[*].currentPrice" 
+    sp_totals_exp = f"{des_bets}betTypes[0].events[*].runners[*].handicap"
 
     # scrape markets from each game page
     for url in game_urls:
         resp = scraper.get(url, headers=headers).json()
         data = resp['props']
-        bet_type_keys = ['`' + str(s) + '`' for s in list(bet_type_dict.keys())]
-        bet_type_query = '[' + ", ".join(bet_type_keys) + ']'
-
-        # expressions
-        matchup_exp = "game.fullName"
-        date_exp = "game.date"
-        bets = ("gameData."
-               f"betTypeGroups[?contains({bet_type_query}, betTypeId)].")
-        bet_ids_exp = bets + "betTypeId"
-        market_ids_exp = bets + "betTypes[0].events[0].eventId"
-        payouts_exp = bets + "betTypes[0].events[0].runners[*].currentPrice" 
-        spread_exp = bets + "betTypes[0].events[0].runners[*].handicap"
+        bet_type_keys = [f'`{key}`' for key in bet_type_dict]
+        bet_type_query = f"[{', '.join(bet_type_keys)}]" 
         
         # searches
-        date = jmespath.search(date_exp, data)
         bet_ids = jmespath.search(bet_ids_exp, data)
         market_ids = jmespath.search(market_ids_exp, data)
         payouts = jmespath.search(payouts_exp, data)
-        sp_ttl = jmespath.search(spread_exp, data)
+        sp_totals = jmespath.search(sp_totals_exp, data)
+        date = jmespath.search(date_exp, data)
+        bet_types = [bet_type_dict[bid] for bid in bet_ids]
         matchup = jmespath.search(matchup_exp, data)
+
+        date = date.replace('.000', '')
         to_replace = [' (A)', ' (N)']
 
         for word in to_replace:
             matchup = matchup.replace(word, '')
 
         away, home = matchup.split(' @')
-        sportsbook = "Sports Interaction"
-        period = 0 # only full game including OT 
 
         # formating data
-        for i in range(len(bet_ids)):
-            market_id = market_ids[i]
-            bet_type = bet_type_dict[bet_ids[i]]
-            dec = 3
+        for market_id, bet_type, pays, sptos in zip(
+                market_ids, bet_types, payouts, sp_totals):
 
             if (bet_type == 'total'):
                 order = [0, 1]
             else:
                 order = [1, 0]
+ 
+            for m_id, pay, spto in zip(market_id, pays, sptos):
+                home_payout = rnd_dec(pay[order[0]], dec) + 1
+                away_payout = rnd_dec(pay[order[1]], dec) + 1
+                if (bet_type == 'moneyline'):
+                    spov = ''
+                    spun = ''
+                else:
+                    spov = str(spto[order[0]])
+                    spun = str(spto[order[1]])
 
-            if (bet_type == 'moneyline'):
-                spov = "" 
-                spun = ""
-            else:
-                spov = str(sp_ttl[i][order[0]])
-                spun = str(sp_ttl[i][order[1]])
+                if (bet_type == 'spread' and spov[0] == '-'):
+                    spun = '+' + spun
+                elif (bet_type == 'spread' and spun[0] == '-'):
+                    spov = '+' + spov
 
-            if (bet_type == 'spread' and spov[0] == '-'):
-                spun = '+' + spun
-            else:
-                spov = '+' + spov
+                markets.append((m_id, sportsbook, matchup, bet_type, 
+                    period, date, home, away, home_payout, away_payout, spun, 
+                    spov
+                ))
 
-            home_payout = rnd_dec(payouts[i][order[0]], dec)
-            away_payout = rnd_dec(payouts[i][order[1]], dec)
-            markets.append((market_id, sportsbook, matchup, bet_type, period, 
-                            date, home, away, home_payout, away_payout, spun, 
-                            spov))
+    return markets
+
+def get_bet99():
+    team_dict = {
+        # NHL
+        "ANA":"Anaheim", "ARI":"Arizona", "BOS":"Boston", 
+        "BUF":"Buffalo", "CAR":"Carolina", "CGY":"Calgary", 
+        "CBJ":"Columbus", "CHI":"Chicago", "COL":"Colorado", 
+        "DET":"Detroit", "DAL":"Dallas", "FLA":"Florida", 
+        "EDM":"Edmonton", "MTL":"Montreal", "LA":"Los Angeles", 
+        "NJ":"New Jersey", "MIN":"Minnesota", "NYI":"New York", 
+        "NSH":"Nashville", "NYR":"New York", "SEA":"Seattle", 
+        "OTT":"Ottawa", "SJ":"San Jose", "PIT":"Pittsburgh", 
+        "STL":"St. Louis", "TB":"Tampa Bay", "VAN":"Vancouver", 
+        "TOR":"Toronto", "VGK":"Vegas", "WSH":"Washington", 
+        "WPG":"Winnipeg",
+            
+        # NBA
+        "ATL":"Atlanta", "BKN":"Brooklyn", "CHA":"Charlotte",
+        "CLE":"Cleveland", "DEN":"Denver", "GS":"Golden State",
+        "HOU":"Houston", "IND":"Indiana", "LAC":"Los Angeles",
+        "LAL":"Los Angeles", "MEM":"Memphis", "MIA":"Miami",
+        "MIL":"Milwaukee", "NOP":"New Orleans", "NY":"New York",
+        "OKC":"Okalahoma City", "ORL":"Orlando", "PHI":"Philadelphia",
+        "PHX":"Phoenix", "POR":"Portland", "SAC":"Sacremento",
+        "SAS":"San Antonio", "UTA":"Utah",
+        
+        # MLB
+        "BAL":"Baltimore", "CIN":"Cincinnati", "KC":"Kansas",
+        "OAK":"Oakland", "SD":"San Diego", "SF":"San Francisco",
+        "TEX":"Texas", "WAS":"Washington",
+    }
+    bet_type_dict = {
+        "Money Line": "moneyline", 
+        "Total":"total", "Spread":"spread", 
+        "Money Line (AL)":"moneyline", 
+        "Total (AL)":"total", 
+        "Spread (AL)":"spread",
+    }
+    gen_query = {
+        "langId":"8",
+        "configId":"12",
+        "integration":"bet99",
+        "group":"AllEvents"
+    }
+    sport_queries = [
+        {"sportids":"70", "champids":"3232"},  # NHL
+        {"sportids":"67", "champids":"2980"},  # NBA
+        {"sportids":"76", "champids":"3286"},  # MLB
+    ]
+    events_url = "https://sb2frontend-altenar2.biahosted.com/api/Sportsbook/GetEvents" 
+    markets = []
+    sportsbook = "Bet99"
+    period = 0  
+ 
+    # expressions
+    bet_type_keys = [f'`{key}`' for key in bet_type_dict]
+    bet_type_query = f"[{', '.join(bet_type_keys)}]"
+    des_bets = f"Events[*].Items[?contains({bet_type_query}, Name)]."
+    matchup_exp = "Events[*].Name"
+    date_exp = "Events[*].EventDate"
+    matchup_ids_exp = f"{des_bets}Id"
+    bet_types_exp = f"{des_bets}Name"
+    payouts_exp = f"{des_bets}Items[*].Price"
+    sp_ttl_exp = f"{des_bets}Items[*].SPOV"
+
+    for query in sport_queries:
+        full_query = gen_query.copy()
+        full_query |= query
+        resp = requests.request("GET", events_url, params=full_query).json()
+        data = resp['Result']['Items'][0]
+
+        # searches
+        matchups = jmespath.search(matchup_exp, data)
+        dates = jmespath.search(date_exp, data)
+        matchup_ids = jmespath.search(matchup_ids_exp, data) 
+        bet_types = jmespath.search(bet_types_exp, data) 
+        payouts = jmespath.search(payouts_exp, data)
+        sp_totals = jmespath.search(sp_ttl_exp, data)
+        
+        for matchup, date, m_ids, b_types, pays, sptos in zip(
+                matchups, dates, matchup_ids, bet_types, payouts, sp_totals):
+            home, away = matchup.split(' vs. ')
+            home_abbr = home.split(' ')[0] 
+            away_abbr = away.split(' ')[0] 
+            home = home.replace(home_abbr, team_dict[home_abbr])
+            away = away.replace(away_abbr, team_dict[away_abbr])
+            matchup = f"{away} @ {home}"
+            for m_id, b_type, pay, spto in zip(m_ids, b_types, pays, sptos):
+                b_type = bet_type_dict[b_type]
+                home_payout = pay[0]
+                away_payout = pay[1] 
+                spov = spto[0]
+                spun = spto[1]
+                if spun == "spread":
+                    spun = f"+{spun[1:]}" if spov.startswith("-") else f"-{spun[1:]}"
+                markets.append((m_id, sportsbook, matchup, b_type, period, 
+                    date, home, away, home_payout, away_payout, spov, spun
+                ))
+
     return markets
 
 if __name__ == '__main__':
