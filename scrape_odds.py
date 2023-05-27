@@ -19,8 +19,9 @@ def main():
     remove_old_markets(conn)
 
     # add and update new markets
-    add_markets(conn, get_sports_int())
-    add_markets(conn, get_bet99())
+    # add_markets(conn, get_sports_int())
+    # add_markets(conn, get_bet99())
+    get_sports_int()
 
 def create_conn(db_file):
     conn = None
@@ -89,117 +90,6 @@ def rnd_dec(number, decimals):
     factor = 10 ** decimals
     return math.floor(number * factor) / factor
 
-def get_sports_int():
-    # Scrapes Sports Interaction and appends results into database
-    markets = []
-    bet_type_dict = {
-        27:"moneyline",
-        28:"total",
-        180:"spread", 
-        704:"total", 
-        716:"spread", 
-        795:"spread", 
-        977:"spread", 
-    }
-    sport_urls = [
-        "https://www.sportsinteraction.com/hockey/nhl-betting-lines", 
-        "https://www.sportsinteraction.com/basketball/nba-betting-lines/", 
-        "https://www.sportsinteraction.com/baseball/mlb-betting-lines/",
-        "https://www.sportsinteraction.com/baseball/national-league-betting-lines/",
-    ]
-    headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0",
-        "Accept": "text/html, application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-        "x-momentum": "true",
-        "DNT": "1",
-        "Alt-Used": "www.sportsinteraction.com",
-        "Connection": "keep-alive",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin"
-    }
-    scraper = cloudscraper.create_scraper()
-
-    game_urls = []
-
-    # scrape game urls to access more markets
-    for url in sport_urls:
-        resp = scraper.get(url, headers=headers).json()
-        games = resp['props']['games']
-        for game in games:
-            gamePath = game['gamePath']
-            game_urls.append(f"https://www.sportsinteraction.com{gamePath}")
-
-    sportsbook = "Sports Interaction"
-    period = 0  # only full game including OT 
-    dec = 3     # rounding down payouts
-    
-    # expressions
-    matchup_exp = "game.fullName"
-    date_exp = "game.date"
-    des_bets = ("gameData."
-                f"betTypeGroups[?contains({bet_type_query}, betTypeId)].")
-    bet_ids_exp = f"{des_bets}betTypeId"
-    market_ids_exp = f"{des_bets}betTypes[0].events[*].eventId"
-    payouts_exp = f"{des_bets}betTypes[0].events[*].runners[*].currentPrice" 
-    sp_totals_exp = f"{des_bets}betTypes[0].events[*].runners[*].handicap"
-
-    # scrape markets from each game page
-    for url in game_urls:
-        resp = scraper.get(url, headers=headers).json()
-        data = resp['props']
-        bet_type_keys = [f'`{key}`' for key in bet_type_dict]
-        bet_type_query = f"[{', '.join(bet_type_keys)}]" 
-        
-        # searches
-        bet_ids = jmespath.search(bet_ids_exp, data)
-        market_ids = jmespath.search(market_ids_exp, data)
-        payouts = jmespath.search(payouts_exp, data)
-        sp_totals = jmespath.search(sp_totals_exp, data)
-        date = jmespath.search(date_exp, data)
-        bet_types = [bet_type_dict[bid] for bid in bet_ids]
-        matchup = jmespath.search(matchup_exp, data)
-
-        date = date.replace('.000', '')
-        to_replace = [' (A)', ' (N)']
-
-        for word in to_replace:
-            matchup = matchup.replace(word, '')
-
-        away, home = matchup.split(' @')
-
-        # formating data
-        for market_id, bet_type, pays, sptos in zip(
-                market_ids, bet_types, payouts, sp_totals):
-
-            if (bet_type == 'total'):
-                order = [0, 1]
-            else:
-                order = [1, 0]
- 
-            for m_id, pay, spto in zip(market_id, pays, sptos):
-                home_payout = rnd_dec(pay[order[0]], dec) + 1
-                away_payout = rnd_dec(pay[order[1]], dec) + 1
-                if (bet_type == 'moneyline'):
-                    spov = ''
-                    spun = ''
-                else:
-                    spov = str(spto[order[0]])
-                    spun = str(spto[order[1]])
-
-                if (bet_type == 'spread' and spov[0] == '-'):
-                    spun = '+' + spun
-                elif (bet_type == 'spread' and spun[0] == '-'):
-                    spov = '+' + spov
-
-                markets.append((m_id, sportsbook, matchup, bet_type, 
-                    period, date, home, away, home_payout, away_payout, spun, 
-                    spov
-                ))
-
-    return markets
 
 def get_bet99():
     team_dict = {
