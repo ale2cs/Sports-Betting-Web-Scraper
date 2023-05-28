@@ -5,27 +5,27 @@ import jmespath
 def get_bet99():
     team_dict = {
         # NHL
-        "ANA":"Anaheim", "ARI":"Arizona", "BOS":"Boston", 
-        "BUF":"Buffalo", "CAR":"Carolina", "CGY":"Calgary", 
-        "CBJ":"Columbus", "CHI":"Chicago", "COL":"Colorado", 
-        "DET":"Detroit", "DAL":"Dallas", "FLA":"Florida", 
-        "EDM":"Edmonton", "MTL":"Montreal", "LA":"Los Angeles", 
-        "NJ":"New Jersey", "MIN":"Minnesota", "NYI":"New York", 
-        "NSH":"Nashville", "NYR":"New York", "SEA":"Seattle", 
-        "OTT":"Ottawa", "SJ":"San Jose", "PIT":"Pittsburgh", 
-        "STL":"St. Louis", "TB":"Tampa Bay", "VAN":"Vancouver", 
-        "TOR":"Toronto", "VGK":"Vegas", "WSH":"Washington", 
-        "WPG":"Winnipeg",
+        'ANA': 'Anaheim', 'ARI': 'Arizona', 'BOS': 'Boston', 
+        'BUF': 'Buffalo', 'CAR': 'Carolina', 'CBJ': 'Columbus', 
+        'CGY': 'Calgary', 'CHI': 'Chicago', 'COL': 'Colorado', 
+        'DAL': 'Dallas', 'DET': 'Detroit', 'EDM': 'Edmonton', 
+        'FLA': 'Florida', 'LA': 'Los Angeles', 'MIN': 'Minnesota', 
+        'MTL': 'Montreal', 'NJ': 'New Jersey', 'NSH': 'Nashville', 
+        'NYI': 'New York', 'NYR': 'New York', 'OTT': 'Ottawa', 
+        'PIT': 'Pittsburgh', 'SEA': 'Seattle', 'SJ': 'San Jose', 
+        'STL': 'St. Louis', 'TB': 'Tampa Bay', 'TOR': 'Toronto', 
+        'VAN': 'Vancouver', 'VGK': 'Vegas', 'WSH': 'Washington', 
+        'WPG': 'Winnipeg',
             
         # NBA
-        "ATL":"Atlanta", "BKN":"Brooklyn", "CHA":"Charlotte",
-        "CLE":"Cleveland", "DEN":"Denver", "GS":"Golden State",
-        "HOU":"Houston", "IND":"Indiana", "LAC":"Los Angeles",
-        "LAL":"Los Angeles", "MEM":"Memphis", "MIA":"Miami",
-        "MIL":"Milwaukee", "NOP":"New Orleans", "NY":"New York",
-        "OKC":"Okalahoma City", "ORL":"Orlando", "PHI":"Philadelphia",
-        "PHX":"Phoenix", "POR":"Portland", "SAC":"Sacremento",
-        "SAS":"San Antonio", "UTA":"Utah",
+        'ATL': 'Atlanta', 'BKN': 'Brooklyn', 'CHA': 'Charlotte', 
+        'CLE': 'Cleveland', 'DEN': 'Denver', 'GS': 'Golden State', 
+        'HOU': 'Houston', 'IND': 'Indiana', 'LAC': 'Los Angeles', 
+        'LAL': 'Los Angeles', 'MEM': 'Memphis', 'MIA': 'Miami', 
+        'MIL': 'Milwaukee', 'NOP': 'New Orleans', 'NY': 'New York', 
+        'OKC': 'Oklahoma City', 'ORL': 'Orlando', 'PHI': 'Philadelphia', 
+        'PHX': 'Phoenix', 'POR': 'Portland', 'SAC': 'Sacramento', 
+        'SAS': 'San Antonio', 'UTA': 'Utah',
         
         # MLB
         "BAL":"Baltimore", "CIN":"Cincinnati", "KC":"Kansas",
@@ -56,15 +56,10 @@ def get_bet99():
     period = 0  
  
     # expressions
-    bet_type_keys = [f'`{key}`' for key in bet_type_dict]
+    bet_type_keys = [f"'{key}'" for key in bet_type_dict]
     bet_type_query = f"[{', '.join(bet_type_keys)}]"
-    des_bets = f"Events[*].Items[?contains({bet_type_query}, Name)]."
-    matchup_exp = "Events[*].Name"
-    date_exp = "Events[*].EventDate"
-    matchup_ids_exp = f"{des_bets}Id"
-    bet_types_exp = f"{des_bets}Name"
-    payouts_exp = f"{des_bets}Items[*].Price"
-    sp_ttl_exp = f"{des_bets}Items[*].SPOV"
+    des_bets_exp = f"Events[*].Items[?contains({bet_type_query}, Name)]"
+    events_exp = "Events[*]"
 
     for query in sport_queries:
         full_query = gen_query.copy()
@@ -73,31 +68,32 @@ def get_bet99():
         data = resp['Result']['Items'][0]
 
         # searches
-        matchups = jmespath.search(matchup_exp, data)
-        dates = jmespath.search(date_exp, data)
-        matchup_ids = jmespath.search(matchup_ids_exp, data) 
-        bet_types = jmespath.search(bet_types_exp, data) 
-        payouts = jmespath.search(payouts_exp, data)
-        sp_totals = jmespath.search(sp_ttl_exp, data)
-        
-        for matchup, date, m_ids, b_types, pays, sptos in zip(
-                matchups, dates, matchup_ids, bet_types, payouts, sp_totals):
-            home, away = matchup.split(' vs. ')
-            home_abbr = home.split(' ')[0] 
-            away_abbr = away.split(' ')[0] 
-            home = home.replace(home_abbr, team_dict[home_abbr])
-            away = away.replace(away_abbr, team_dict[away_abbr])
-            matchup = f"{away} @ {home}"
-            for m_id, b_type, pay, spto in zip(m_ids, b_types, pays, sptos):
-                b_type = bet_type_dict[b_type]
-                home_payout = pay[0]
-                away_payout = pay[1] 
-                spov = spto[0]
-                spun = spto[1]
+        game_bets = jmespath.search(des_bets_exp, data) 
+        events = jmespath.search(events_exp, data)
+
+        for bets, event in zip(game_bets, events):
+            matchup = event['Name']
+            date = event['EventDate']
+            for bet in bets:
+                market_id = bet['Id']
+                bet_type = bet_type_dict[b['Name']]
+                home = bet['Items'][0]
+                away = bet['Items'][1]
+                home_team, away_team = matchup.split(' vs. ')
+                home_abbr = home_team.split(' ')[0] 
+                away_abbr = away_team.split(' ')[0] 
+                home_team = home_team.replace(home_abbr, team_dict[home_abbr])
+                away_team = away_team.replace(away_abbr, team_dict[away_abbr])
+                home_payout= home['Price']
+                away_payout = away['Price']
+                spov = home['SPOV']
+                spun = away['SPOV']
                 if spun == "spread":
                     spun = f"+{spun[1:]}" if spov.startswith("-") else f"-{spun[1:]}"
-                markets.append((m_id, sportsbook, matchup, b_type, period, 
-                    date, home, away, home_payout, away_payout, spov, spun
-                ))
+
+                markets.append((
+                    market_id, sportsbook, matchup, bet_type, period, date, 
+                    home_team, away_team, home_payout, away_payout, spov, spun
+                )) 
 
     return markets
