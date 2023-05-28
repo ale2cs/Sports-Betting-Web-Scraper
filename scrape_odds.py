@@ -6,6 +6,9 @@ from sqlite3 import Error
 from datetime import datetime, timezone
 import math
 
+from sportbooks.bet99 import get_bet99
+from sportbooks.sports_interaction import get_sports_interaction
+
 def main():
     database = "./odds.db"
 
@@ -19,8 +22,8 @@ def main():
     remove_old_markets(conn)
 
     # add and update new markets
-    # add_markets(conn, get_sports_int())
-    # add_markets(conn, get_bet99())
+    add_markets(conn, get_sports_interaction())
+    add_markets(conn, get_bet99())
 
 def create_conn(db_file):
     conn = None

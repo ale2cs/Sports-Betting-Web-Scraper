@@ -5,27 +5,27 @@ import jmespath
 def get_bet99():
     team_dict = {
         # NHL
-        'ANA': 'Anaheim', 'ARI': 'Arizona', 'BOS': 'Boston', 
-        'BUF': 'Buffalo', 'CAR': 'Carolina', 'CBJ': 'Columbus', 
-        'CGY': 'Calgary', 'CHI': 'Chicago', 'COL': 'Colorado', 
-        'DAL': 'Dallas', 'DET': 'Detroit', 'EDM': 'Edmonton', 
-        'FLA': 'Florida', 'LA': 'Los Angeles', 'MIN': 'Minnesota', 
-        'MTL': 'Montreal', 'NJ': 'New Jersey', 'NSH': 'Nashville', 
-        'NYI': 'New York', 'NYR': 'New York', 'OTT': 'Ottawa', 
-        'PIT': 'Pittsburgh', 'SEA': 'Seattle', 'SJ': 'San Jose', 
-        'STL': 'St. Louis', 'TB': 'Tampa Bay', 'TOR': 'Toronto', 
-        'VAN': 'Vancouver', 'VGK': 'Vegas', 'WSH': 'Washington', 
-        'WPG': 'Winnipeg',
+        'ANA':'Anaheim', 'ARI':'Arizona', 'BOS':'Boston', 
+        'BUF':'Buffalo', 'CAR':'Carolina', 'CBJ':'Columbus', 
+        'CGY':'Calgary', 'CHI':'Chicago', 'COL':'Colorado', 
+        'DAL':'Dallas', 'DET':'Detroit', 'EDM':'Edmonton', 
+        'FLA':'Florida', 'LA':'Los Angeles', 'MIN':'Minnesota', 
+        'MTL':'Montreal', 'NJ':'New Jersey', 'NSH':'Nashville', 
+        'NYI':'New York', 'NYR':'New York', 'OTT':'Ottawa', 
+        'PIT':'Pittsburgh', 'SEA':'Seattle', 'SJ':'San Jose', 
+        'STL':'St. Louis', 'TB':'Tampa Bay', 'TOR':'Toronto', 
+        'VAN':'Vancouver', 'VGK':'Vegas', 'WSH':'Washington', 
+        'WPG':'Winnipeg',
             
         # NBA
-        'ATL': 'Atlanta', 'BKN': 'Brooklyn', 'CHA': 'Charlotte', 
-        'CLE': 'Cleveland', 'DEN': 'Denver', 'GS': 'Golden State', 
-        'HOU': 'Houston', 'IND': 'Indiana', 'LAC': 'Los Angeles', 
-        'LAL': 'Los Angeles', 'MEM': 'Memphis', 'MIA': 'Miami', 
-        'MIL': 'Milwaukee', 'NOP': 'New Orleans', 'NY': 'New York', 
-        'OKC': 'Oklahoma City', 'ORL': 'Orlando', 'PHI': 'Philadelphia', 
-        'PHX': 'Phoenix', 'POR': 'Portland', 'SAC': 'Sacramento', 
-        'SAS': 'San Antonio', 'UTA': 'Utah',
+        'ATL':'Atlanta', 'BKN':'Brooklyn', 'CHA':'Charlotte', 
+        'CLE':'Cleveland', 'DEN':'Denver', 'GS':'Golden State', 
+        'HOU':'Houston', 'IND':'Indiana', 'LAC':'Los Angeles', 
+        'LAL':'Los Angeles', 'MEM':'Memphis', 'MIA':'Miami', 
+        'MIL':'Milwaukee', 'NOP':'New Orleans', 'NY':'New York', 
+        'OKC':'Oklahoma City','ORL': 'Orlando', 'PHI':'Philadelphia', 
+        'PHX':'Phoenix', 'POR':'Portland', 'SAC':'Sacramento', 
+        'SAS':'San Antonio', 'UTA':'Utah',
         
         # MLB
         "BAL":"Baltimore", "CIN":"Cincinnati", "KC":"Kansas",
@@ -74,20 +74,18 @@ def get_bet99():
         for bets, event in zip(game_bets, events):
             matchup = event['Name']
             date = event['EventDate']
+            home_team, away_team = matchup.split(' vs. ')
+            home_abbr = home_team.split(' ')[0] 
+            away_abbr = away_team.split(' ')[0] 
+            home_team = home_team.replace(home_abbr, team_dict[home_abbr])
+            away_team = away_team.replace(away_abbr, team_dict[away_abbr])
+            matchup = f'{away_team} @ {home_team}'
             for bet in bets:
                 market_id = bet['Id']
-                bet_type = bet_type_dict[b['Name']]
-                home = bet['Items'][0]
-                away = bet['Items'][1]
-                home_team, away_team = matchup.split(' vs. ')
-                home_abbr = home_team.split(' ')[0] 
-                away_abbr = away_team.split(' ')[0] 
-                home_team = home_team.replace(home_abbr, team_dict[home_abbr])
-                away_team = away_team.replace(away_abbr, team_dict[away_abbr])
-                home_payout= home['Price']
-                away_payout = away['Price']
-                spov = home['SPOV']
-                spun = away['SPOV']
+                bet_type = bet_type_dict[bet['Name']]
+                home, away = bet['Items'][0], bet['Items'][1] 
+                home_payout, away_payout = home['Price'], away['Price']
+                spov, spun  = home['SPOV'], away['SPOV'] 
                 if spun == "spread":
                     spun = f"+{spun[1:]}" if spov.startswith("-") else f"-{spun[1:]}"
 

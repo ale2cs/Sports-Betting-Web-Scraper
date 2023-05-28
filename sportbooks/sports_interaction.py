@@ -58,20 +58,21 @@ def scrape_markets(game_urls, bet_type_dict, headers, scraper):
     markets = []
     sportsbook = "Sports Interaction"
     period = 0
+    dec = 3
 
+    market_exp = "betTypes[0].events[*]"
     for url in game_urls:
         resp = scraper.get(url, headers=headers).json()
         data = resp['props']
 
         matchup = clean_matchup(data['game']['fullName'])
-        away, home = matchup.split(' @')
+        away_team, home_team = matchup.split(' @')
 
         date = data['game']['date']
         date = date.replace('.000', '')
 
         bet_type_keys = [f'`{key}`' for key in bet_type_dict]
         bet_type_query = f"[{', '.join(bet_type_keys)}]"
-        market_exp = "betTypes[0].events[*].runners[*]"
         des_bets_exp = (
             f"gameData.betTypeGroups[?contains({bet_type_query}, betTypeId)]"
         )
@@ -83,10 +84,12 @@ def scrape_markets(game_urls, bet_type_dict, headers, scraper):
             market_data = jmespath.search(market_exp, bet)
             for market in market_data:
                 market_id = market['eventId']
-                home_payout = rnd_dec(market[order[0]]['currentPrice'], dec=3)
-                away_payout = rnd_dec(market[order[1]]['currentPrice'], dec=3)
-                spov = market[order[0]]['handicap']
-                spun = market[order[1]]['handicap']
+                lines = market['runners']
+                home, away = lines[order[0]], lines[order[1]]
+                home_payout = rnd_dec(home['currentPrice'], dec) + 1
+                away_payout = rnd_dec(away['currentPrice'], dec) + 1
+                spov = str(home['handicap'])
+                spun = str(away['handicap'])
                 if bet_type == 'spread':
                     if spov[0] == '-':
                         spun = f"-{spun}"
@@ -94,7 +97,7 @@ def scrape_markets(game_urls, bet_type_dict, headers, scraper):
                         spov = f"+{spov}"
                 markets.append((
                     market_id, sportsbook, matchup, bet_type, period, date, 
-                    home, away, home_payout, away_payout, spun, spov
+                    home_team, away_team, home_payout, away_payout, spun, spov
                 ))
 
     return markets
