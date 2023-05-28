@@ -1,5 +1,7 @@
 import cloudscraper
 import jmespath
+from utils import rnd_dec
+
 
 bet_type_dict = {
     27:"moneyline",
@@ -79,8 +81,8 @@ def get_sports_interaction():
             market_data = jmespath.search(market_exp, bet)
             for market in market_data:
                 market_id = market['eventId']
-                home_payout = market[order[0]]['currentPrice']
-                away_payout = market[order[1]]['currentPrice']
+                home_payout = rnd_dec(market[order[0]]['currentPrice'], dec)
+                away_payout = rnd_dec(market[order[1]]['currentPrice'], dec)
                 spov = market[order[0]]['handicap']
                 spun = market[order[1]]['handicap']
                 if bet_type == 'spread':
@@ -94,5 +96,5 @@ def get_sports_interaction():
                 ))
     return markets
 
-def request():
-    
+def get_games():
+    pass     
