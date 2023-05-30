@@ -2,6 +2,7 @@ import sqlite3
 from sqlite3 import Error
 from datetime import datetime, timezone
 import time
+import os
 
 from sportbooks.utils import *
 from sportbooks.bet99 import get_bet99
@@ -29,14 +30,15 @@ def main():
         current_time = datetime.now()
         time_format = "%H:%M:%S"  # Example format: HH:MM:SS
         formatted_time = current_time.strftime(time_format)
-        print(f"---------- {formatted_time} ----------")
+        clear_terminal()
+        print(f"---------- {formatted_time} ----------\n")
 
         for market in positive_ev(conn):
             print(market) 
             print(no_vig_odds(market[9], market[10]), rnd_dec(vig(market[9], market[10]) * 100, 2), rnd_dec(pos_ev(market[9], market[10], market[12], market[13]) * 100, 2), rem_time(market[3]))
             print('')
 
-        time.sleep(60 * 5)
+        time.sleep(60)
 
 def create_conn(db_file):
     conn = None
@@ -113,6 +115,13 @@ def positive_ev(conn):
     cur = conn.cursor() 
     return cur.execute(find_markets)
 
+
+def clear_terminal():
+    # Check the operating system and execute the appropriate command
+    if os.name == 'nt':  # For Windows
+        os.system('cls')
+    else:  # For UNIX/Linux/Mac
+        os.system('clear')
 
 if __name__ == '__main__':
     main()
