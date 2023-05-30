@@ -1,6 +1,6 @@
 import cloudscraper
 import jmespath
-from utils import rnd_dec
+from sportbooks.utils import rnd_dec
 
 
 def get_sports_interaction():
@@ -48,6 +48,8 @@ def scrape_game_urls(sport_urls, headers, scraper):
         resp = scraper.get(url, headers=headers).json()
         games = resp['props']['games']
         for game in games:
+            if (not valid_game_name(game['gameName'])):
+                continue
             gamePath = game['gamePath']
             game_urls.append(f"https://www.sportsinteraction.com{gamePath}")
 
@@ -66,7 +68,7 @@ def scrape_markets(game_urls, bet_type_dict, headers, scraper):
         data = resp['props']
 
         matchup = clean_matchup(data['game']['fullName'])
-        away_team, home_team = matchup.split(' @')
+        away_team, home_team = matchup.split(' @ ')
 
         date = data['game']['date']
         date = date.replace('.000', '')
@@ -88,22 +90,35 @@ def scrape_markets(game_urls, bet_type_dict, headers, scraper):
                 home, away = lines[order[0]], lines[order[1]]
                 home_payout = rnd_dec(home['currentPrice'], dec) + 1
                 away_payout = rnd_dec(away['currentPrice'], dec) + 1
-                spov = str(home['handicap'])
-                spun = str(away['handicap'])
+                spov, spun = str(home['handicap']), str(away['handicap'])
                 if bet_type == 'spread':
                     if spov[0] == '-':
-                        spun = f"-{spun}"
+                        spun = f"+{spun}"
                     elif spun[0] == '-':
                         spov = f"+{spov}"
+                elif bet_type == 'moneyline':
+                    spov = spun = ''
                 markets.append((
                     market_id, sportsbook, matchup, bet_type, period, date, 
-                    home_team, away_team, home_payout, away_payout, spun, spov
+                    home_team, away_team, home_payout, away_payout, spov, spun
                 ))
 
     return markets
 
+def valid_game_name(game_name):
+    # game name cannot exceed 7 words
+    words = game_name.split(' ')
+    return len(words) <= 7
 
 def clean_matchup(matchup):
+    unusual_team_name = {
+        "LA Anaheim":"Los Angeles",
+    }
+
+    for key, value in unusual_team_name.items():
+        if key in matchup:
+            matchup = matchup.replace(key, value)
+
     to_replace = [' (A)', ' (N)']
     for word in to_replace:
         matchup = matchup.replace(word, '')

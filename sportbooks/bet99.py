@@ -65,6 +65,8 @@ def get_bet99():
         full_query = gen_query.copy()
         full_query |= query
         resp = requests.request("GET", events_url, params=full_query).json()
+        if (resp['Result']['Items'] == []):
+            continue
         data = resp['Result']['Items'][0]
 
         # searches
@@ -85,9 +87,12 @@ def get_bet99():
                 bet_type = bet_type_dict[bet['Name']]
                 home, away = bet['Items'][0], bet['Items'][1] 
                 home_payout, away_payout = home['Price'], away['Price']
-                spov, spun  = home['SPOV'], away['SPOV'] 
-                if spun == "spread":
+                spov, spun = home['SPOV'], away['SPOV']
+                if bet_type == "spread":
+                    spov, spun = add_dec(spov[1:]), add_dec(spun[1:]) 
                     spun = f"+{spun[1:]}" if spov.startswith("-") else f"-{spun[1:]}"
+                else:
+                    spov, spun = add_dec(spov), add_dec(spun)
 
                 markets.append((
                     market_id, sportsbook, matchup, bet_type, period, date, 
@@ -95,3 +100,9 @@ def get_bet99():
                 )) 
 
     return markets
+
+
+def add_dec(string):
+    if string.isdigit():
+        string += '.0'
+    return string
