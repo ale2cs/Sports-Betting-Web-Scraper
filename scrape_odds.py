@@ -35,7 +35,8 @@ def main():
 
         for market in positive_ev(conn):
             print(market) 
-            print(no_vig_odds(market[9], market[10]), rnd_dec(vig(market[9], market[10]) * 100, 2), rnd_dec(pos_ev(market[9], market[10], market[12], market[13]) * 100, 2), rem_time(market[3]))
+            no_vig = no_vig_odds(market[9], market[10])
+            print((rnd_dec(no_vig[0], 2), rnd_dec(no_vig[1], 2)), rnd_dec(vig(market[9], market[10]) * 100, 2), rnd_dec(pos_ev(market[9], market[10], market[12], market[13]) * 100, 2), rem_time(market[3]))
             print('')
 
         time.sleep(60)

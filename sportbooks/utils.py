@@ -16,11 +16,9 @@ def rnd_dec(number, decimals):
 def american_to_decimal(number):
     dec = 3
     if (number > 0):
-        converted = rnd_dec(1 + (number / 100), dec)
+        return rnd_dec(1 + (number / 100), dec)
     else:
-        converted = rnd_dec(1 - (100 / number), dec) 
-
-    return converted
+        return rnd_dec(1 - (100 / number), dec)
 
 def imp_prob(odds1, odds2):
     return (odds2 / (odds1 + odds2)), (odds1 / (odds1 + odds2))

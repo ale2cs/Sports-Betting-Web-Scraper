@@ -89,11 +89,13 @@ def get_bet99():
                 home_payout, away_payout = home['Price'], away['Price']
                 spov, spun = home['SPOV'], away['SPOV']
                 if bet_type == "spread":
-                    spov, spun = add_dec(spov[1:]), add_dec(spun[1:]) 
-                    spun = f"+{spun[1:]}" if spov.startswith("-") else f"-{spun[1:]}"
+                    if spov[0] == '-':
+                        spun = f"{add_dec(spun[1:])}"
+                    else:
+                        spun = f"-{add_dec(spun[1:])}" 
+                    spov = f"{spov[0]}{add_dec(spov[1:])}"
                 else:
                     spov, spun = add_dec(spov), add_dec(spun)
-
                 markets.append((
                     market_id, sportsbook, matchup, bet_type, period, date, 
                     home_team, away_team, home_payout, away_payout, spov, spun
@@ -104,5 +106,5 @@ def get_bet99():
 
 def add_dec(string):
     if string.isdigit():
-        string += '.0'
+        string = f"{string}.0"
     return string
