@@ -99,7 +99,9 @@ def remove_old_markets(conn):
 
 def positive_ev(conn):
     find_markets = '''
-        SELECT M1.game, M1.type, M1.period, M1.date, M1.spov, M1.spun, M1.home_team, M1.away_team, M1.sportsbook, M1.home_payout, M1.away_payout, M2.sportsbook, M2.home_payout, M2.away_payout 
+        SELECT M1.game, M1.type, M1.period, M1.date, M1.spov, M1.spun, 
+            M1.home_team, M1.away_team, M1.sportsbook, M1.home_payout, 
+            M1.away_payout, M2.sportsbook, M2.home_payout, M2.away_payout 
         From markets AS M1, markets AS M2
         WHERE M1.sportsbook = "Pinnacle" 
         AND M1.sportsbook <> M2.sportsbook
