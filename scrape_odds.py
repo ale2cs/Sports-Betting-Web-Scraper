@@ -8,6 +8,7 @@ from sportbooks.utils import *
 from sportbooks.bet99 import get_bet99
 from sportbooks.pinnacle import get_pinacle
 from sportbooks.sports_interaction import get_sports_interaction
+from sportbooks.bodog import get_bodog
 
 def main():
     database = "./odds.db"
@@ -26,6 +27,7 @@ def main():
         add_markets(conn, get_pinacle())
         add_markets(conn, get_sports_interaction())
         add_markets(conn, get_bet99())
+        add_markets(conn, get_bodog())
 
         current_time = datetime.now()
         time_format = "%H:%M:%S"  # Example format: HH:MM:SS

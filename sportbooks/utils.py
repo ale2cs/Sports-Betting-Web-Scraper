@@ -51,3 +51,5 @@ def wager(bankroll, odds1, odds2, odds3):
 def rem_time(time):
     return datetime.fromisoformat(time) - datetime.fromisoformat(datetime.now(timezone.utc).isoformat())
 
+def epoch_to_iso(time):
+    return f"{datetime.utcfromtimestamp(time).isoformat()}Z"
