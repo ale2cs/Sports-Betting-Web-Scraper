@@ -1,5 +1,5 @@
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 def rnd_dec(number, decimals):
     # Returns a value rounded down to a specific number of decimal places.
@@ -44,12 +44,15 @@ def kelly_criterion(win_prob, odds):
 
 def wager(bankroll, odds1, odds2, odds3): 
     prob1, prob2 = imp_prob(odds1, odds2)
-    multiplier = 0.3
+    multiplier = 0.20
     kelly = kelly_criterion(prob1, odds3)
     return multiplier * kelly * bankroll
 
 def rem_time(time):
     return datetime.fromisoformat(time) - datetime.fromisoformat(datetime.now(timezone.utc).isoformat())
+
+def over_max_hours(time, hours):
+    return datetime.fromisoformat(time) > (datetime.fromisoformat((datetime.now(timezone.utc) + timedelta(hours=hours)).isoformat()))
 
 def epoch_to_iso(time):
     return f"{datetime.utcfromtimestamp(time).isoformat()}Z"

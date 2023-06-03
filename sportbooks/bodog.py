@@ -27,6 +27,8 @@ def get_bodog():
     for league in leagues: 
         url = f"https://www.bodog.eu/services/sports/event/coupon/events/A/description/{league}"
         resp = requests.request("GET", url, params=query).json()
+        if not resp:
+            continue
         events = resp[0]['events']
 
         for event in events:

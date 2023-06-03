@@ -90,7 +90,7 @@ def get_bet99():
                 spov, spun = home['SPOV'], away['SPOV']
                 if bet_type == "spread":
                     if spov[0] == '-':
-                        spun = f"{add_dec(spun[1:])}"
+                        spun = f"+{add_dec(spun[1:])}"
                     else:
                         spun = f"-{add_dec(spun[1:])}" 
                     spov = f"{spov[0]}{add_dec(spov[1:])}"

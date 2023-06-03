@@ -36,9 +36,18 @@ def main():
         print(f"---------- {formatted_time} ----------\n")
 
         for market in positive_ev(conn):
+            if over_max_hours(market[3], 10):
+                continue
             print(market) 
-            no_vig = no_vig_odds(market[9], market[10])
-            print((rnd_dec(no_vig[0], 2), rnd_dec(no_vig[1], 2)), rnd_dec(vig(market[9], market[10]) * 100, 2), rnd_dec(pos_ev(market[9], market[10], market[12], market[13]) * 100, 2), rem_time(market[3]))
+            stats = MarketStats(market[9], market[10], market[12], market[13])
+            bet_type = market[1]
+            if stats.home_bet:
+                payout = stats.home_payout
+                home_away = "home"
+            else:
+                payout = stats.away_payout
+                home_away = "away" 
+            print((home_away, payout), f"Vig:{stats.vig}%", f"EV:{stats.pos_ev}%", f"Wager:${stats.bet_amount}", f"RemTime:{rem_time(market[3])}")
             print('')
 
         time.sleep(60)
@@ -127,6 +136,54 @@ def clear_terminal():
         os.system('cls')
     else:  # For UNIX/Linux/Mac
         os.system('clear')
+
+class MarketStats:
+    def __init__(self, pin_home_payout, pin_away_payout, home_payout, away_payout):
+        self.bankroll = 10000
+        self.percent_kelly = 0.25
+        self.dec = 2
+        self.pin_home_payout = pin_home_payout
+        self.pin_away_payout = pin_away_payout
+        self.home_payout = home_payout
+        self.away_payout = away_payout
+        self.vig = self.vig()
+        self.home_prob, self.away_prob = self.imp_prob()
+        self.home_ev, self.away_ev = self.ev()
+        self.home_bet = self.is_home_bet()
+        self.pos_ev = self.pos_ev()
+        self.bet_amount = self.wager()
+
+    def imp_prob(self):
+        denominator = (self.pin_home_payout + self.pin_away_payout)
+        return (self.pin_away_payout / denominator), (self.pin_home_payout / denominator)
+
+    def vig(self):
+        return rnd_dec(((1 / self.pin_home_payout) + (1 / self.pin_away_payout) - 1) * 100, self.dec)
+
+    def no_vig_odds(self): 
+        return (1 / self.home_prob), (1 / self.away_prob) 
+
+    def ev(self):
+        home_ev = rnd_dec(((self.home_prob * (self.home_payout - 1)) + self.home_prob - 1) * 100, self.dec)
+        away_ev = rnd_dec(((self.away_prob * (self.away_payout - 1)) + self.away_prob - 1) * 100, self.dec)
+        return home_ev, away_ev 
+
+    def is_home_bet(self): 
+        return self.home_ev > self.away_ev
+
+    def pos_ev(self):
+        return self.home_ev if self.home_bet else self.away_ev
+
+    def kelly_criterion(self):
+        if self.home_bet:
+            return self.home_prob - ((1 - self.home_prob) / (self.home_payout - 1))
+        return self.away_prob - ((1 - self.away_prob) / (self.away_payout - 1))
+
+    def wager(self): 
+        kelly = self.kelly_criterion()
+        return rnd_dec(self.percent_kelly * kelly * self.bankroll, self.dec)
+    
+
 
 if __name__ == '__main__':
     main()
