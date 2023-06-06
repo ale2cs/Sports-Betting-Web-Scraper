@@ -21,6 +21,7 @@ def get_bodog():
         'baseball/mlb', 
         'soccer/north-america/united-states/mls',
         'baseball/japan/professional-baseball',
+        'basketball/wnba',
     )
     headers = {
         "cookie": "TS014505a4=014b5d5d074621dcb805603f6ecd400ce1005af41531ed96e612911b0ac1d43907fae8b6e0d8487c332e76c9c3ce7978a0e89cfbdf",
