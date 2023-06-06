@@ -36,9 +36,8 @@ def main():
         print(f"---------- {formatted_time} ----------\n")
 
         for market in positive_ev(conn):
-            if over_max_hours(market[3], 10):
+            if over_max_hours(market[3], 2):
                 continue
-            print(market) 
             stats = MarketStats(market[9], market[10], market[12], market[13])
             bet_type = market[1]
             if stats.home_bet:
@@ -47,6 +46,9 @@ def main():
             else:
                 payout = stats.away_payout
                 home_away = "away" 
+            if stats.pos_ev < 0.5:
+                continue
+            print(market) 
             print((home_away, payout), f"Vig:{stats.vig}%", f"EV:{stats.pos_ev}%", f"Wager:${stats.bet_amount}", f"RemTime:{rem_time(market[3])}")
             print('')
 

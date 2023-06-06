@@ -9,13 +9,19 @@ def get_bodog():
         "Spread":"spread",
         "Puckline":"spread",
         "Goal Spread":"spread",
-        "Draw No Bet":"draw no bet",
+        "Draw No Bet":"moneyline",
         "Total":"total",
         "Total Runs O/U":"total",
         "Total Goals O/U":"total",
 
     }
-    leagues = ('hockey/nhl', 'basketball/nba', 'baseball/mlb', 'soccer/north-america/united-states/mls')
+    leagues = (
+        'hockey/nhl', 
+        'basketball/nba', 
+        'baseball/mlb', 
+        'soccer/north-america/united-states/mls',
+        'baseball/japan/professional-baseball',
+    )
     headers = {
         "cookie": "TS014505a4=014b5d5d074621dcb805603f6ecd400ce1005af41531ed96e612911b0ac1d43907fae8b6e0d8487c332e76c9c3ce7978a0e89cfbdf",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0",
@@ -60,7 +66,7 @@ def get_bodog():
                         outcomes.pop(0)
                     for i, value in enumerate(outcomes):
                         if i % 2 != 0:
-                            continue
+                            continue 
                         away, home = outcomes[i], outcomes[i+1]
                         market_id = away['id']
                         away, home = away['price'], home['price'] 
@@ -71,7 +77,11 @@ def get_bodog():
                         if bet_type == 'total': 
                             spov, spun = home['handicap'], away['handicap']
                         elif bet_type == 'spread':
-                            spov, spun = home['handicap'], away['handicap']
+                            if 'handicap2' in home:
+                                spov = str((float(home['handicap']) + float(home['handicap2'])) / 2)
+                                spun = str((float(away['handicap']) + float(away['handicap2'])) / 2)
+                            else:
+                                spov, spun = home['handicap'], away['handicap']
                             if spov[0] == '-':
                                 spun = f"+{spun}"
                             elif spun[0] == '-':

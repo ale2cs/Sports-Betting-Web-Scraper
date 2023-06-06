@@ -8,6 +8,8 @@ def get_pinacle():
         487,  # NBA
         246,  # MLB
         2663,  # MLS
+        187703,  # NPB
+        578,  # WNBA
     ]
     header = {
         "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R",
@@ -37,6 +39,8 @@ def get_pinacle():
             market_data = jmespath.search(matching_id_exp, prices)
             for data in market_data:
                 bet_type = data['type']
+                if len(data['prices']) != 2:  # only two outcome bets
+                    continue
                 home, away = data['prices'][0], data['prices'][1]
                 home_payout = american_to_decimal(home['price']) 
                 away_payout = american_to_decimal(away['price'])
@@ -60,7 +64,11 @@ def get_pinacle():
 def parse_games(sport):
     # parses desired betting markets
     des_bets_exp = "[?periods[0].period == `0` && parent != None && periods[0].cutoffAt != None][parentId, parent.participants, periods[0]]"
-    return remove_duplicate_games(jmespath.search(des_bets_exp, sport))
+    bets = jmespath.search(des_bets_exp, sport)
+    if not bets:
+        alt_exp = "[?periods[0].period == `0` && periods[0].cutoffAt != None][id, participants, periods[0]]"
+        bets = jmespath.search(alt_exp, sport)
+    return remove_duplicate_games(bets)
 
 def remove_duplicate_games(games):
     unique_ids = []
@@ -80,4 +88,4 @@ def create_market_id(game_id, bet_type, bet_type_dict, period, spov):
     if bet_type in ['spread', 'total']:
         market_id += int(2 * float(spov))
 
-    return market_id
+    return market_id 
