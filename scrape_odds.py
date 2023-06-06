@@ -140,7 +140,7 @@ def clear_terminal():
 class MarketStats:
     def __init__(self, pin_home_payout, pin_away_payout, home_payout, away_payout):
         self.bankroll = 10000
-        self.percent_kelly = 0.25
+        self.percent_kelly = 0.3
         self.dec = 2
         self.pin_home_payout = pin_home_payout
         self.pin_away_payout = pin_away_payout

@@ -4,9 +4,10 @@ from sportbooks.utils import american_to_decimal
 
 def get_pinacle():
     sport_codes = [
-        1456,  # nhl
-        487,  # nba
-        246,  # mlb
+        1456,  # NHL
+        487,  # NBA
+        246,  # MLB
+        2663,  # MLS
     ]
     header = {
         "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R",
