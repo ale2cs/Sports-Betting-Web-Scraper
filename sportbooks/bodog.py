@@ -48,6 +48,7 @@ def get_bodog():
             continue
         events = data[0]['events']
 
+        reverse = False
         for event in events:
             matchup = event['description']
             if '@' in matchup:
@@ -55,6 +56,7 @@ def get_bodog():
             elif 'vs' in matchup:
                 home_team, away_team = matchup.split(' vs ')
                 matchup = f"{away_team} @ {home_team}"
+                reverse = True
             else:
                 continue
             date = epoch_to_iso(event['startTime'] / 1000)
@@ -71,24 +73,26 @@ def get_bodog():
                         away, home = outcomes[i], outcomes[i+1]
                         market_id = away['id']
                         away, home = away['price'], home['price'] 
-                        if bet_type != 'total':
+                        if bet_type != 'total' and not reverse:
                             home_payout, away_payout = home['decimal'], away['decimal']
                         else:
                             away_payout, home_payout = home['decimal'], away['decimal']
-                        if bet_type == 'total': 
-                            spov, spun = home['handicap'], away['handicap']
-                        elif bet_type == 'spread':
+
+                        if bet_type != 'moneyline':
                             if 'handicap2' in home:
                                 spov = str((float(home['handicap']) + float(home['handicap2'])) / 2)
                                 spun = str((float(away['handicap']) + float(away['handicap2'])) / 2)
                             else:
                                 spov, spun = home['handicap'], away['handicap']
+                        else:
+                            spov = spun = ''
+                        
+                        if bet_type == 'spread':
                             if spov[0] == '-':
                                 spun = f"+{spun}"
                             elif spun[0] == '-':
                                 spov = f"+{spov}"
-                        else:
-                            spov = spun = ''
+
                         markets.append((market_id, sportsbook, matchup, bet_type, 
                             period, date, home_team, away_team, home_payout, 
                             away_payout, spov, spun

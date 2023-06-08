@@ -8,17 +8,23 @@ def get_sports_interaction():
     bet_type_dict = {
         27: "moneyline",
         28: "total",
+        75: "moneyline",
         180: "spread",
+        252: "spread",
+        279: "total",
         704: "total",
         716: "spread",
         795: "spread",
         977: "spread",
+        1423: "total",
     }
     sport_urls = [
         "https://www.sportsinteraction.com/hockey/nhl-betting-lines",
         "https://www.sportsinteraction.com/basketball/nba-betting-lines/",
         "https://www.sportsinteraction.com/baseball/mlb-betting-lines/",
         "https://www.sportsinteraction.com/baseball/national-league-betting-lines/",
+        "https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
+        "https://www.sportsinteraction.com/basketball/wnba-betting-lines/"
     ]
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0",
@@ -68,8 +74,13 @@ def scrape_markets(game_urls, bet_type_dict, headers, scraper):
         data = resp['props']
 
         matchup = clean_matchup(data['game']['fullName'])
-        away_team, home_team = matchup.split(' @ ')
-
+        if '@' in matchup:
+            away_team, home_team = matchup.split(' @ ')
+        elif 'v' in matchup:
+            home_team, away_team = matchup.split(' v ')
+            matchup = f"{away_team} @ {home_team}"
+        else:
+            continue
         date = data['game']['date']
         date = date.replace('.000', '')
 
