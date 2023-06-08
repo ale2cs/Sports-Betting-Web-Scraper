@@ -1,4 +1,5 @@
 import requests
+from requests.adapters import HTTPAdapter, Retry
 import jmespath
 
 
@@ -39,18 +40,6 @@ def get_bet99():
         "Total (AL)":"total", 
         "Spread (AL)":"spread",
     }
-    gen_query = {
-        "langId":"8",
-        "configId":"12",
-        "integration":"bet99",
-        "group":"AllEvents"
-    }
-    sport_queries = [
-        {"sportids":"70", "champids":"3232"},  # NHL
-        {"sportids":"67", "champids":"2980"},  # NBA
-        {"sportids":"76", "champids":"3286"},  # MLB
-    ]
-    events_url = "https://sb2frontend-altenar2.biahosted.com/api/Sportsbook/GetEvents" 
     markets = []
     sportsbook = "Bet99"
     period = 0  
@@ -60,15 +49,8 @@ def get_bet99():
     bet_type_query = f"[{', '.join(bet_type_keys)}]"
     des_bets_exp = f"Events[*].Items[?contains({bet_type_query}, Name)]"
     events_exp = "Events[*]"
-
-    for query in sport_queries:
-        full_query = gen_query.copy()
-        full_query |= query
-        resp = requests.request("GET", events_url, params=full_query).json()
-        if (resp['Result']['Items'] == []):
-            continue
-        data = resp['Result']['Items'][0]
-
+    
+    for data in make_requests():
         # searches
         game_bets = jmespath.search(des_bets_exp, data) 
         events = jmespath.search(events_exp, data)
@@ -103,6 +85,31 @@ def get_bet99():
 
     return markets
 
+def make_requests():
+    gen_query = {
+        "langId":"8",
+        "configId":"12",
+        "integration":"bet99",
+        "group":"AllEvents"
+    }
+    sport_queries = [
+        {"sportids":"70", "champids":"3232"},  # NHL
+        {"sportids":"67", "champids":"2980"},  # NBA
+        {"sportids":"76", "champids":"3286"},  # MLB
+    ]
+    events_url = "https://sb2frontend-altenar2.biahosted.com/api/Sportsbook/GetEvents" 
+    responses = []
+    session = requests.Session()
+    retries = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504, 429])
+    session.mount('https://', HTTPAdapter(max_retries=retries))
+    for query in sport_queries:
+        full_query = gen_query.copy()
+        full_query |= query
+        resp = session.get(events_url, params=full_query).json()
+        if (data := resp['Result']['Items']):
+            responses.append(data[0])
+    session.close()
+    return responses 
 
 def add_dec(string):
     if string.isdigit():

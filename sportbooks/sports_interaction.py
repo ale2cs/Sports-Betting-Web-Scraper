@@ -4,7 +4,7 @@ from sportbooks.utils import rnd_dec
 
 
 def get_sports_interaction():
-    # Scrapes Sports Interaction and appends results into the database
+    # Scrapes Sports Interaction and returns markets
     bet_type_dict = {
         27: "moneyline",
         28: "total",
