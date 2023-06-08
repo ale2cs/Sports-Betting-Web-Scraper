@@ -1,16 +1,16 @@
 import requests
-from requests.adapters import HTTPAdapter, Retry
+import asyncio
+import httpx
 import jmespath
 from sportbooks.utils import american_to_decimal
 
-def get_pinacle():
+async def get_pinacle():
     markets = []
+    games, values = await get_data()
     sportsbook = "Pinnacle"
     bet_type_dict = {"moneyline":0, "total":1, "spread":2} 
     bet_type_keys = [f'`{key}`' for key in bet_type_dict]
     bet_type_query = f"[{', '.join(bet_type_keys)}]"
-
-    games, values = make_requests()
 
     for sport, prices in zip(games, values):
         for game_id, teams, time in parse_games(sport):
@@ -43,31 +43,32 @@ def get_pinacle():
                 ))
     return markets
 
-def make_requests():
+async def get_data():
     sport_codes = [
         1456,  # NHL
         487,  # NBA
         246,  # MLB
         2663,  # MLS
         187703,  # NPB
-    ]
-    header = {
-        "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R",
-    }
-    session = requests.Session()
-    retries = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504, 429])
-    session.mount('https://', HTTPAdapter(max_retries=retries))
-    games = []
-    values = []
-    for code in sport_codes:
-        games_url = (f"https://guest.api.arcadia.pinnacle.com/0.1/leagues/{code}/matchups")
-        values_url = f"https://guest.api.arcadia.pinnacle.com/0.1/leagues/{code}/markets/straight"
-        game_data = session.get(games_url, headers=header)
-        games.append(game_data.json())
-        value_data = session.get(values_url, headers=header)
-        values.append(value_data.json())
-    session.close()
+    ] 
+    async with httpx.AsyncClient() as client: 
+        game_tasks = []
+        value_tasks =[]
+        for code in sport_codes:
+            games_url = (f"https://guest.api.arcadia.pinnacle.com/0.1/leagues/{code}/matchups")
+            values_url = f"https://guest.api.arcadia.pinnacle.com/0.1/leagues/{code}/markets/straight"
+            game_tasks.append(asyncio.ensure_future(make_request(client, games_url)))
+            value_tasks.append(asyncio.ensure_future(make_request(client, values_url)))
+        games = await asyncio.gather(*game_tasks)    
+        values = await asyncio.gather(*value_tasks)    
     return games, values
+
+async def make_request(client, url):
+    header = {
+            "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R",
+    }
+    resp = await client.get(url, headers=header)
+    return resp.json()
 
 def parse_games(sport):
     # parses desired betting markets

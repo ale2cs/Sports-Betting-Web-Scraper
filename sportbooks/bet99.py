@@ -1,9 +1,8 @@
-import requests
-from requests.adapters import HTTPAdapter, Retry
+import asyncio
+import httpx
 import jmespath
 
-
-def get_bet99():
+async def get_bet99():
     team_dict = {
         # NHL
         'ANA':'Anaheim', 'ARI':'Arizona', 'BOS':'Boston', 
@@ -50,7 +49,11 @@ def get_bet99():
     des_bets_exp = f"Events[*].Items[?contains({bet_type_query}, Name)]"
     events_exp = "Events[*]"
     
-    for data in make_requests():
+    responses = await get_data()
+    for resp in responses:
+        if not resp['Result']['Items']:
+            continue
+        data = resp['Result']['Items'][0]
         # searches
         game_bets = jmespath.search(des_bets_exp, data) 
         events = jmespath.search(events_exp, data)
@@ -85,7 +88,8 @@ def get_bet99():
 
     return markets
 
-def make_requests():
+async def get_data():
+    url = "https://sb2frontend-altenar2.biahosted.com/api/Sportsbook/GetEvents" 
     gen_query = {
         "langId":"8",
         "configId":"12",
@@ -97,19 +101,18 @@ def make_requests():
         {"sportids":"67", "champids":"2980"},  # NBA
         {"sportids":"76", "champids":"3286"},  # MLB
     ]
-    events_url = "https://sb2frontend-altenar2.biahosted.com/api/Sportsbook/GetEvents" 
-    responses = []
-    session = requests.Session()
-    retries = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504, 429])
-    session.mount('https://', HTTPAdapter(max_retries=retries))
-    for query in sport_queries:
-        full_query = gen_query.copy()
-        full_query |= query
-        resp = session.get(events_url, params=full_query).json()
-        if (data := resp['Result']['Items']):
-            responses.append(data[0])
-    session.close()
-    return responses 
+    async with httpx.AsyncClient() as client:
+        tasks = []
+        for query in sport_queries:
+            full_query = gen_query.copy()
+            full_query |= query
+            tasks.append(asyncio.ensure_future(make_request(client, url, full_query)))
+        responses = await asyncio.gather(*tasks)
+    return responses
+
+async def make_request(client, url, query):
+    resp = await client.get(url, params=query)
+    return resp.json()
 
 def add_dec(string):
     if string.isdigit():

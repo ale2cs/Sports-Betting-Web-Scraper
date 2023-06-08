@@ -1,9 +1,9 @@
-import requests
-from requests.adapters import HTTPAdapter, Retry
+import asyncio
+import httpx
 import jmespath
 from sportbooks.utils import epoch_to_iso
 
-def get_bodog():
+async def get_bodog():
     bet_type_dict = {
         "Moneyline":"moneyline",
         "Runline":"spread",
@@ -24,7 +24,10 @@ def get_bodog():
     bet_type_query = f"[{', '.join(bet_type_keys)}]"
     des_bets_exp = f"displayGroups[*].markets[?contains({bet_type_query}, description) && (period.description == 'Game' || period.description == 'Regulation Time')]"
 
-    for data in make_requests(): 
+    responses = await get_data()
+    for data in responses: 
+        if not data:
+            continue
         events = data[0]['events']
 
         reverse = False
@@ -78,15 +81,7 @@ def get_bodog():
                         ))
     return markets
 
-def make_requests():
-    headers = {
-        "cookie": "TS014505a4=014b5d5d074621dcb805603f6ecd400ce1005af41531ed96e612911b0ac1d43907fae8b6e0d8487c332e76c9c3ce7978a0e89cfbdf",
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0",
-        "Accept": "application/json, text/plain, */*",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Accept-Encoding": "gzip, deflate, br",
-    }
-    query = {"preMatchOnly":"true"}
+async def get_data():
     leagues = (
         'hockey/nhl', 
         'basketball/nba', 
@@ -95,15 +90,23 @@ def make_requests():
         'baseball/japan/professional-baseball',
         'basketball/wnba',
     )
-
-    responses = []
-    session = requests.Session()
-    retries = Retry(total=3, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504, 429])
-    session.mount('https://', HTTPAdapter(max_retries=retries))
-    for league in leagues:
-        url = f"https://www.bodog.eu/services/sports/event/coupon/events/A/description/{league}"
-        resp = session.get(url, headers=headers, params=query)
-        if data := resp.json():
-            responses.append(data)
-    session.close()
+    async with httpx.AsyncClient() as client: 
+        tasks = []
+        for league in leagues:
+            url = f"https://www.bodog.eu/services/sports/event/coupon/events/A/description/{league}"
+            resp = tasks.append(asyncio.ensure_future(make_request(client, url)))
+        responses = await asyncio.gather(*tasks) 
     return responses
+
+
+async def make_request(client, url):
+    headers = {
+        "cookie": "TS014505a4=014b5d5d074621dcb805603f6ecd400ce1005af41531ed96e612911b0ac1d43907fae8b6e0d8487c332e76c9c3ce7978a0e89cfbdf",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Accept-Encoding": "gzip, deflate, br",
+    }
+    query = {"preMatchOnly":"true"}
+    resp = await client.get(url, headers=headers, params=query)
+    return resp.json()

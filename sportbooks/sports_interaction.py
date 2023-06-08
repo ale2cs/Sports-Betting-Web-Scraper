@@ -67,7 +67,7 @@ def scrape_markets(game_urls, bet_type_dict, headers, scraper):
     sportsbook = "Sports Interaction"
     period = 0
     dec = 3
-
+    
     market_exp = "betTypes[0].events[*]"
     for url in game_urls:
         resp = scraper.get(url, headers=headers).json()

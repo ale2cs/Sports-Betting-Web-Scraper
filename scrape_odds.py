@@ -1,3 +1,4 @@
+import asyncio
 import sqlite3
 from sqlite3 import Error
 from datetime import datetime, timezone
@@ -10,7 +11,7 @@ from sportbooks.pinnacle import get_pinacle
 from sportbooks.sports_interaction import get_sports_interaction
 from sportbooks.bodog import get_bodog
 
-def main():
+async def main():
     database = "./odds.db"
 
     # create a database connection
@@ -24,10 +25,13 @@ def main():
         remove_old_markets(conn)
 
         # add and update new markets
-        add_markets(conn, get_pinacle())
+        pinacle = await get_pinacle()
+        add_markets(conn, pinacle)
         add_markets(conn, get_sports_interaction())
-        add_markets(conn, get_bet99())
-        add_markets(conn, get_bodog())
+        bet99 = await get_bet99()
+        add_markets(conn, bet99)
+        bodog = await get_bodog()
+        add_markets(conn, bodog)
 
         current_time = datetime.now()
         time_format = "%H:%M:%S"  # Example format: HH:MM:SS
@@ -188,4 +192,4 @@ class MarketStats:
 
 
 if __name__ == '__main__':
-    main()
+    asyncio.run(main())
