@@ -1,4 +1,5 @@
 import cloudscraper
+from concurrent.futures import ThreadPoolExecutor
 import jmespath
 from sportbooks.utils import rnd_dec
 
@@ -26,6 +27,13 @@ def get_sports_interaction():
         "https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
         "https://www.sportsinteraction.com/basketball/wnba-betting-lines/"
     ]
+
+    game_urls = scrape_game_urls(sport_urls)
+    game_data = scrape_game_data(game_urls)
+
+    return scrape_markets(game_data, bet_type_dict)
+
+def scrape(url):
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/112.0",
         "Accept": "text/html, application/xhtml+xml",
@@ -41,17 +49,16 @@ def get_sports_interaction():
     }
 
     scraper = cloudscraper.create_scraper()
-
-    game_urls = scrape_game_urls(sport_urls, headers, scraper)
-
-    return scrape_markets(game_urls, bet_type_dict, headers, scraper)
+    resp = scraper.get(url, headers=headers)
+    return resp.json()
 
 
-def scrape_game_urls(sport_urls, headers, scraper):
+def scrape_game_urls(sport_urls):
     game_urls = []
 
-    for url in sport_urls:
-        resp = scraper.get(url, headers=headers).json()
+    with ThreadPoolExecutor() as executor:
+        responses = executor.map(scrape, sport_urls)
+    for resp in responses:
         games = resp['props']['games']
         for game in games:
             if (not valid_game_name(game['gameName'])):
@@ -61,16 +68,19 @@ def scrape_game_urls(sport_urls, headers, scraper):
 
     return game_urls
 
+def scrape_game_data(game_urls):
+    with ThreadPoolExecutor() as executor:
+        responses = executor.map(scrape, game_urls)
+    return responses
 
-def scrape_markets(game_urls, bet_type_dict, headers, scraper):
+def scrape_markets(game_data, bet_type_dict):
     markets = []
     sportsbook = "Sports Interaction"
     period = 0
     dec = 3
     
     market_exp = "betTypes[0].events[*]"
-    for url in game_urls:
-        resp = scraper.get(url, headers=headers).json()
+    for resp in game_data:
         data = resp['props']
 
         matchup = clean_matchup(data['game']['fullName'])

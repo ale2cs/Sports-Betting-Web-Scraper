@@ -20,18 +20,20 @@ async def main():
     # create table if not already made
     create_table(conn)
 
-    while True:
+    done = False
+    while not done:
         # remove old markets
         remove_old_markets(conn)
 
         # add and update new markets
         pinacle = await get_pinacle()
         add_markets(conn, pinacle)
-        add_markets(conn, get_sports_interaction())
         bet99 = await get_bet99()
         add_markets(conn, bet99)
         bodog = await get_bodog()
         add_markets(conn, bodog)
+        sports_interaction = get_sports_interaction()
+        add_markets(conn, sports_interaction)
 
         current_time = datetime.now()
         time_format = "%H:%M:%S"  # Example format: HH:MM:SS
