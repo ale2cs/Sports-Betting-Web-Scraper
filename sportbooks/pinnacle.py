@@ -1,4 +1,3 @@
-import requests
 import asyncio
 import httpx
 import jmespath

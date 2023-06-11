@@ -1,3 +1,4 @@
+import httpx
 import cloudscraper
 from concurrent.futures import ThreadPoolExecutor
 import jmespath
@@ -48,7 +49,15 @@ def scrape(url):
         "Sec-Fetch-Site": "same-origin"
     }
 
-    scraper = cloudscraper.create_scraper()
+    scraper = cloudscraper.create_scraper(
+        interpreter='nodejs',
+        delay=10,
+        browser={
+            'browser':'chrome',
+            'platform':'android',
+            'desktop':False,
+        },
+    )
     resp = scraper.get(url, headers=headers)
     return resp.json()
 
