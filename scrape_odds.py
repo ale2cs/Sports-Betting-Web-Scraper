@@ -32,8 +32,11 @@ async def main():
         add_markets(conn, bet99)
         bodog = await get_bodog()
         add_markets(conn, bodog)
-        sports_interaction = get_sports_interaction()
-        add_markets(conn, sports_interaction)
+        try:
+            sports_interaction = get_sports_interaction()
+            add_markets(conn, sports_interaction)
+        except:
+            pass
 
         current_time = datetime.now()
         time_format = "%H:%M:%S"  # Example format: HH:MM:SS
