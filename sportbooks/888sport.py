@@ -34,14 +34,14 @@ async def get_888sport():
                     line = selections[option][option]
                     home, away = line
                     home_payout, away_payout = home['decimal_price'], away['decimal_price']
-                    bet_type = home['market_name']
+                    bet_type = bet_type_dict[home['market_name']]
                     spov = home['special_odds_value']
                     spun = away['special_odds_value']
                     markets.append((market_id, sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
             else:
                 home, away = line
                 home_payout, away_payout = home['decimal_price'], away['decimal_price']
-                bet_type = home['market_name']
+                bet_type = bet_type_dict[home['market_name']]
                 spov = spun = ''
                 markets.append((market_id, sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
 
@@ -82,5 +82,3 @@ async def make_request(client, url, type):
     elif type == 'POST':
         resp = await client.post(url, headers=headers)
     return resp.json()
-
-[print(market) for market in asyncio.run(get_888sport())]
