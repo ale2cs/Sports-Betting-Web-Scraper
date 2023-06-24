@@ -47,8 +47,8 @@ async def get_data():
         1456,  # NHL
         487,  # NBA
         246,  # MLB
-        2663,  # MLS
-        187703,  # NPB
+        #2663,  # MLS
+        #187703,  # NPB
     ] 
     async with httpx.AsyncClient() as client: 
         game_tasks = []

@@ -86,9 +86,9 @@ async def get_data():
         'hockey/nhl', 
         'basketball/nba', 
         'baseball/mlb', 
-        'soccer/north-america/united-states/mls',
-        'baseball/japan/professional-baseball',
-        'basketball/wnba',
+        #'soccer/north-america/united-states/mls',
+        #'baseball/japan/professional-baseball',
+        #'basketball/wnba',
     )
     async with httpx.AsyncClient() as client: 
         tasks = []

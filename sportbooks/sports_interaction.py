@@ -26,8 +26,8 @@ def get_sports_interaction():
         "https://www.sportsinteraction.com/basketball/nba-betting-lines/",
         "https://www.sportsinteraction.com/baseball/mlb-betting-lines/",
         "https://www.sportsinteraction.com/baseball/national-league-betting-lines/",
-        "https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
-        "https://www.sportsinteraction.com/basketball/wnba-betting-lines/"
+        #"https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
+        #"https://www.sportsinteraction.com/basketball/wnba-betting-lines/"
     ]
 
     game_urls = scrape_game_urls(sport_urls)
