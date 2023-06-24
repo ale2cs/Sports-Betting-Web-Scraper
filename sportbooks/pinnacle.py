@@ -5,6 +5,7 @@ from sportbooks.utils import american_to_decimal
 
 async def get_pinacle():
     markets = []
+    lines = []
     games, values = await get_data()
     sportsbook = "Pinnacle"
     bet_type_dict = {"moneyline":0, "total":1, "spread":2} 
@@ -24,8 +25,8 @@ async def get_pinacle():
                 if len(data['prices']) != 2:  # only two outcomes
                     continue
                 home, away = data['prices'][0], data['prices'][1]
-                home_payout = american_to_decimal(home['price']) 
-                away_payout = american_to_decimal(away['price'])
+                home_odds = american_to_decimal(home['price']) 
+                away_odds = american_to_decimal(away['price'])
                 if ('points' in home):
                     spov, spun = str(home['points']), str(away['points'])
                     if (spov[0] == '-'):
@@ -34,12 +35,12 @@ async def get_pinacle():
                         spov = f"+{spov}"
                 else:
                     spov = spun = ''
-                market_id = create_market_id(game_id, bet_type, bet_type_dict, 
-                    period, spov)
-                markets.append((market_id, sportsbook, matchup, bet_type, period, 
-                    date, home_team, away_team, home_payout, away_payout, spov, 
-                    spun
+                markets.append((
+                    matchup, bet_type, period, date, home_team, away_team, 
+                    spov, spun
                 ))
+                lines.append((sportsbook, home_odds, away_odds))
+
     return markets
 
 async def get_data():
@@ -87,13 +88,3 @@ def remove_duplicate_games(games):
             unique_ids.append(game_id)
             unique_games.append(item)
     return unique_games
-
-def create_market_id(game_id, bet_type, bet_type_dict, period, spov):
-    market_id = (game_id * 1000000) + 1000
-    market_id += bet_type_dict[bet_type] * 100000
-    market_id += period * 10000
-
-    if bet_type in ['spread', 'total']:
-        market_id += int(2 * float(spov))
-
-    return market_id 

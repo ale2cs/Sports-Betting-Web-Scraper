@@ -21,7 +21,6 @@ async def get_888sport():
         event = data['event']['details']['event']
         lines = data['event']['markets']['markets_selections']
         des_lines = data['event']['markets']['markets_selections']['gameLineMarket']['group_markets']
-        market_id = event['id']
         matchup = event['name']
         date = event['scheduled_start']
         away_team, home_team = matchup.split(' @ ') 
@@ -37,13 +36,13 @@ async def get_888sport():
                     bet_type = bet_type_dict[home['market_name']]
                     spov = home['special_odds_value']
                     spun = away['special_odds_value']
-                    markets.append((market_id, sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
+                    markets.append((sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
             else:
                 home, away = line
                 home_payout, away_payout = home['decimal_price'], away['decimal_price']
                 bet_type = bet_type_dict[home['market_name']]
                 spov = spun = ''
-                markets.append((market_id, sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
+                markets.append((sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
 
     return markets
 

@@ -68,7 +68,6 @@ async def get_bet99():
             away_team = away_team.replace(away_abbr, team_dict[away_abbr])
             matchup = f'{away_team} @ {home_team}'
             for bet in bets:
-                market_id = bet['Id']
                 bet_type = bet_type_dict[bet['Name']]
                 home, away = bet['Items'][0], bet['Items'][1] 
                 home_payout, away_payout = home['Price'], away['Price']
@@ -82,8 +81,8 @@ async def get_bet99():
                 else:
                     spov, spun = add_dec(spov), add_dec(spun)
                 markets.append((
-                    market_id, sportsbook, matchup, bet_type, period, date, 
-                    home_team, away_team, home_payout, away_payout, spov, spun
+                    sportsbook, matchup, bet_type, period, date, home_team, 
+                    away_team, home_payout, away_payout, spov, spun
                 )) 
 
     return markets

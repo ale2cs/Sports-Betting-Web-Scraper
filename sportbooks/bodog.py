@@ -53,7 +53,6 @@ async def get_bodog():
                         if i % 2 != 0:
                             continue 
                         away, home = outcomes[i], outcomes[i+1]
-                        market_id = away['id']
                         away, home = away['price'], home['price'] 
                         if bet_type != 'total' and not reverse:
                             home_payout, away_payout = home['decimal'], away['decimal']
@@ -75,7 +74,7 @@ async def get_bodog():
                             elif spun[0] == '-':
                                 spov = f"+{spov}"
 
-                        markets.append((market_id, sportsbook, matchup, bet_type, 
+                        markets.append((sportsbook, matchup, bet_type, 
                             period, date, home_team, away_team, home_payout, 
                             away_payout, spov, spun
                         ))

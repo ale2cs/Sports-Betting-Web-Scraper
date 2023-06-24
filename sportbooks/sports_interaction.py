@@ -117,7 +117,6 @@ def scrape_markets(game_data, bet_type_dict):
             order = [0, 1] if bet_type == "total" else [1, 0]
             market_data = jmespath.search(market_exp, bet)
             for market in market_data:
-                market_id = market['eventId']
                 lines = market['runners']
                 home, away = lines[order[0]], lines[order[1]]
                 home_payout = rnd_dec(home['currentPrice'], dec) + 1
@@ -131,8 +130,8 @@ def scrape_markets(game_data, bet_type_dict):
                 elif bet_type == 'moneyline':
                     spov = spun = ''
                 markets.append((
-                    market_id, sportsbook, matchup, bet_type, period, date, 
-                    home_team, away_team, home_payout, away_payout, spov, spun
+                    sportsbook, matchup, bet_type, period, date, home_team, 
+                    away_team, home_payout, away_payout, spov, spun
                 ))
 
     return markets

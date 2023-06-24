@@ -20,12 +20,12 @@ async def main():
     # create table if not already made
     create_table(conn)
 
-    done = False
-    while not done:
-        # remove old markets
-        remove_old_markets(conn)
+    pinacle = await get_pinacle()
+    add_markets(conn, pinacle)
 
-        # add and update new markets
+    done = True # True while testing
+    while not done:
+        # add new markets
         pinacle = await get_pinacle()
         add_markets(conn, pinacle)
         bet99 = await get_bet99()
@@ -76,16 +76,13 @@ def create_table(conn):
     cur = conn.cursor()
     create = '''
         CREATE TABLE IF NOT EXISTS markets 
-        (market_id INT PRIMARY KEY NOT NULL, 
-        sportsbook TEXT, 
-        game TEXT, 
+        (market_id INT PRIMARY KEY AUTOINCREMENT, 
+        name TEXT, 
         type TEXT,
         period TEXT, 
         date TEXT, 
         home_team TEXT, 
         away_team TEXT, 
-        home_payout FLOAT,
-        away_payout FLOAT, 
         spov TEXT, 
         spun TEXT)
     '''
@@ -94,6 +91,7 @@ def create_table(conn):
 def add_markets(conn, markets):
     # https://www.sqlite.org/lang_UPSERT.html
     cur = conn.cursor()
+    # upsert doesn't work with id
     upsert = '''
         INSERT INTO markets 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -103,7 +101,12 @@ def add_markets(conn, markets):
         spov=excluded.spov, 
         spun=excluded.spun
     '''
-    cur.executemany(upsert, markets)
+    placeholders = ', '.join(['?']) * len(markets)
+    insert = f'''
+        INSERT INTO markets
+        VALUES ({placeholders})
+    '''
+    cur.executemany(insert, markets)
     conn.commit()
     return cur.lastrowid
 
