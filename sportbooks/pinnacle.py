@@ -39,9 +39,12 @@ async def get_pinacle():
                     matchup, bet_type, period, date, home_team, away_team, 
                     spov, spun
                 ))
-                lines.append((sportsbook, home_odds, away_odds))
+                lines.append((
+                    matchup, bet_type, period, date, spov, spun, sportsbook, 
+                    home_odds, away_odds
+                ))
 
-    return markets
+    return markets, lines
 
 async def get_data():
     sport_codes = [

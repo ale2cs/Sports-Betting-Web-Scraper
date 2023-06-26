@@ -18,10 +18,11 @@ async def main():
     conn = create_conn(database)
 
     # create table if not already made
-    create_table(conn)
+    create_tables(conn)
 
-    pinacle = await get_pinacle()
-    add_markets(conn, pinacle)
+    pinacle_markets, pinacle_lines= await get_pinacle()
+    add_markets(conn, pinacle_markets)
+    add_lines(conn, pinacle_lines)
 
     done = True # True while testing
     while not done:
@@ -72,39 +73,42 @@ def create_conn(db_file):
 
     return conn
 
-def create_table(conn):
+def create_tables(conn):
     cur = conn.cursor()
-    create = '''
-        CREATE TABLE IF NOT EXISTS markets 
-        (market_id INT PRIMARY KEY AUTOINCREMENT, 
-        name TEXT, 
-        type TEXT,
-        period TEXT, 
-        date TEXT, 
-        home_team TEXT, 
-        away_team TEXT, 
-        spov TEXT, 
-        spun TEXT)
+    create_markets = '''
+        CREATE TABLE IF NOT EXISTS markets (
+            market_id INTEGER PRIMARY KEY, 
+            name TEXT, 
+            type TEXT,
+            period TEXT, 
+            date TEXT, 
+            home_team TEXT, 
+            away_team TEXT, 
+            spov TEXT, 
+            spun TEXT,
+            CONSTRAINT unique_market UNIQUE (name, type, period, spov, spun)
+        )
     '''
-    cur.execute(create)
+    create_lines = '''
+        CREATE TABLE IF NOT EXISTS lines (
+            line_id INTEGER PRIMARY KEY,
+            market_id INTEGER,
+            sportsbook TEXT,
+            home_odds FLOAT,
+            away_odds FLOAT,
+            date_created TEXT,
+            FOREIGN KEY (market_id) REFERENCES market (market_id)
+        )
+    '''
+    # CONSTRAINT unique_line UNIQUE (market_id, sportsbook, home_odds, away_odds)
+    cur.execute(create_markets)
+    cur.execute(create_lines)
 
 def add_markets(conn, markets):
-    # https://www.sqlite.org/lang_UPSERT.html
     cur = conn.cursor()
-    # upsert doesn't work with id
-    upsert = '''
-        INSERT INTO markets 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON CONFLICT(market_id) 
-        DO UPDATE SET home_payout=excluded.home_payout, 
-        away_payout=excluded.away_payout,
-        spov=excluded.spov, 
-        spun=excluded.spun
-    '''
-    placeholders = ', '.join(['?']) * len(markets)
     insert = f'''
-        INSERT INTO markets
-        VALUES ({placeholders})
+        INSERT OR IGNORE INTO markets
+        VALUES (null, ?, ?, ?, ?, ?, ?, ?, ?)
     '''
     cur.executemany(insert, markets)
     conn.commit()
@@ -121,6 +125,32 @@ def remove_old_markets(conn):
     conn.commit()
 
     return cur.lastrowid
+
+def add_lines(conn, lines):
+    cur = conn.cursor()
+    cur_date = datetime.now(timezone.utc).isoformat()
+    print(lines[0])
+    insert = f'''
+        INSERT INTO lines
+        VALUES (null, (
+            SELECT market_id
+            FROM markets
+            WHERE name = ?
+            AND type = ?
+            AND period = ?
+            AND (abs(julianday(date) - julianday(?)) * 24 * 60) < 60 
+            AND spov = ?
+            AND spun = ?
+        ) 
+        , ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now')) 
+    ''' 
+    cur.executemany(insert, lines)
+    conn.commit()
+    
+    return cur.lastrowid
+
+def find_market_id(conn, market_data):
+    pass
 
 def positive_ev(conn):
     find_markets = '''
