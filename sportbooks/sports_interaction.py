@@ -118,7 +118,7 @@ def scrape_lines(game_data, bet_type_dict):
             market_data = jmespath.search(market_exp, bet)
             for market in market_data:
                 line = market['runners']
-                home, away = line[order[0]], lines[order[1]]
+                home, away = line[order[0]], line[order[1]]
                 home_odds = rnd_dec(home['currentPrice'], dec) + 1
                 away_odds = rnd_dec(away['currentPrice'], dec) + 1
                 spov, spun = str(home['handicap']), str(away['handicap'])

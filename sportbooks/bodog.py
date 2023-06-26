@@ -22,7 +22,7 @@ async def get_bodog():
 
     bet_type_keys = [f"'{key}'" for key in bet_type_dict]
     bet_type_query = f"[{', '.join(bet_type_keys)}]"
-    des_bets_exp = f"displayGroups[*].lines[?contains({bet_type_query}, description) && (period.description == 'Game' || period.description == 'Regulation Time')]"
+    des_bets_exp = f"displayGroups[*].markets[?contains({bet_type_query}, description) && (period.description == 'Game' || period.description == 'Regulation Time')]"
 
     responses = await get_data()
     for data in responses: 
