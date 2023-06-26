@@ -130,7 +130,7 @@ def scrape_lines(game_data, bet_type_dict):
                 elif bet_type == 'moneyline':
                     spov = spun = ''
                 lines.append((
-                    sportsbook, matchup, bet_type, period, date, spov, spun, 
+                    matchup, bet_type, period, date, spov, spun, sportsbook, 
                     home_odds, away_odds
                 ))
 

@@ -12,6 +12,7 @@ async def get_888sport():
     }
     markets = []
     sportsbook = "888Sport"
+    period = 0
     async with httpx.AsyncClient() as client:
         data = await make_request(client, url, 'POST')
         games = data['events']
@@ -32,17 +33,24 @@ async def get_888sport():
                 for option in options:
                     line = selections[option][option]
                     home, away = line
-                    home_payout, away_payout = home['decimal_price'], away['decimal_price']
+                    home_odds, away_odds = home['decimal_price'], away['decimal_price']
                     bet_type = bet_type_dict[home['market_name']]
                     spov = home['special_odds_value']
                     spun = away['special_odds_value']
-                    markets.append((sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
+                    lines.append((
+                        matchup, bet_type, period, date, spov, spun, sportsbook, 
+                        home_odds, away_odds
+                    ))
             else:
                 home, away = line
-                home_payout, away_payout = home['decimal_price'], away['decimal_price']
+                home_odds, away_odds = home['decimal_price'], away['decimal_price']
                 bet_type = bet_type_dict[home['market_name']]
                 spov = spun = ''
-                markets.append((sportsbook, matchup, bet_type, date, home_team, away_team, home_payout, away_payout, spov, spun))
+                lines.append((
+                    matchup, bet_type, period, date, spov, spun, sportsbook, 
+                    home_odds, away_odds
+                ))
+
 
     return markets
 

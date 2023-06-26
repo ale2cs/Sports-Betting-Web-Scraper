@@ -55,9 +55,9 @@ async def get_bodog():
                         away, home = outcomes[i], outcomes[i+1]
                         away, home = away['price'], home['price'] 
                         if bet_type != 'total' and not reverse:
-                            home_odds, away_payout = home['decimal'], away['decimal']
+                            home_odds, away_odds = home['decimal'], away['decimal']
                         else:
-                            away_payout, home_odds = home['decimal'], away['decimal']
+                            away_odds, home_odds = home['decimal'], away['decimal']
 
                         if bet_type != 'moneyline':
                             if 'handicap2' in home:
@@ -74,8 +74,9 @@ async def get_bodog():
                             elif spun[0] == '-':
                                 spov = f"+{spov}"
 
-                        lines.append((sportsbook, matchup, bet_type, 
-                            period, date, spov, spun, home_odds, away_payout 
+                        lines.append((
+                            matchup, bet_type, period, date, spov, spun, sportsbook, 
+                            home_odds, away_odds
                         ))
     return lines
 

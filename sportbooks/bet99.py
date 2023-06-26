@@ -81,8 +81,9 @@ async def get_bet99():
                 else:
                     spov, spun = add_dec(spov), add_dec(spun)
                 lines.append((
-                    sportsbook, matchup, bet_type, period, date, spov, spun, home_odds, away_odds
-                )) 
+                    matchup, bet_type, period, date, spov, spun, sportsbook, 
+                    home_odds, away_odds
+                ))
 
     return lines
 
