@@ -39,7 +39,7 @@ async def get_bet99():
         "Total (AL)":"total", 
         "Spread (AL)":"spread",
     }
-    markets = []
+    lines = []
     sportsbook = "Bet99"
     period = 0  
  
@@ -70,7 +70,7 @@ async def get_bet99():
             for bet in bets:
                 bet_type = bet_type_dict[bet['Name']]
                 home, away = bet['Items'][0], bet['Items'][1] 
-                home_payout, away_payout = home['Price'], away['Price']
+                home_odds, away_odds = home['Price'], away['Price']
                 spov, spun = home['SPOV'], away['SPOV']
                 if bet_type == "spread":
                     if spov[0] == '-':
@@ -80,12 +80,11 @@ async def get_bet99():
                     spov = f"{spov[0]}{add_dec(spov[1:])}"
                 else:
                     spov, spun = add_dec(spov), add_dec(spun)
-                markets.append((
-                    sportsbook, matchup, bet_type, period, date, home_team, 
-                    away_team, home_payout, away_payout, spov, spun
+                lines.append((
+                    sportsbook, matchup, bet_type, period, date, spov, spun, home_odds, away_odds
                 )) 
 
-    return markets
+    return lines
 
 async def get_data():
     url = "https://sb2frontend-altenar2.biahosted.com/api/Sportsbook/GetEvents" 

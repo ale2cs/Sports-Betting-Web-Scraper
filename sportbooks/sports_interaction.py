@@ -7,7 +7,7 @@ from sportbooks.utils import rnd_dec
 
 
 def get_sports_interaction():
-    # Scrapes Sports Interaction and returns markets
+    # Scrapes Sports Interaction and returns lines
     bet_type_dict = {
         27: "moneyline",
         28: "total",
@@ -33,7 +33,7 @@ def get_sports_interaction():
     game_urls = scrape_game_urls(sport_urls)
     game_data = scrape_game_data(game_urls)
 
-    return scrape_markets(game_data, bet_type_dict)
+    return scrape_lines(game_data, bet_type_dict)
 
 def scrape(url):
     headers = {
@@ -84,8 +84,8 @@ def scrape_game_data(game_urls):
         responses = executor.map(scrape, game_urls)
     return responses
 
-def scrape_markets(game_data, bet_type_dict):
-    markets = []
+def scrape_lines(game_data, bet_type_dict):
+    lines = []
     sportsbook = "Sports Interaction"
     period = 0
     dec = 3
@@ -117,10 +117,10 @@ def scrape_markets(game_data, bet_type_dict):
             order = [0, 1] if bet_type == "total" else [1, 0]
             market_data = jmespath.search(market_exp, bet)
             for market in market_data:
-                lines = market['runners']
-                home, away = lines[order[0]], lines[order[1]]
-                home_payout = rnd_dec(home['currentPrice'], dec) + 1
-                away_payout = rnd_dec(away['currentPrice'], dec) + 1
+                line = market['runners']
+                home, away = line[order[0]], lines[order[1]]
+                home_odds = rnd_dec(home['currentPrice'], dec) + 1
+                away_odds = rnd_dec(away['currentPrice'], dec) + 1
                 spov, spun = str(home['handicap']), str(away['handicap'])
                 if bet_type == 'spread':
                     if spov[0] == '-':
@@ -129,12 +129,12 @@ def scrape_markets(game_data, bet_type_dict):
                         spov = f"+{spov}"
                 elif bet_type == 'moneyline':
                     spov = spun = ''
-                markets.append((
-                    sportsbook, matchup, bet_type, period, date, home_team, 
-                    away_team, home_payout, away_payout, spov, spun
+                lines.append((
+                    sportsbook, matchup, bet_type, period, date, spov, spun, 
+                    home_odds, away_odds
                 ))
 
-    return markets
+    return lines
 
 def valid_game_name(game_name):
     # game name cannot exceed 7 words

@@ -20,22 +20,19 @@ async def main():
     # create table if not already made
     create_tables(conn)
 
-    pinacle_markets, pinacle_lines= await get_pinacle()
-    add_markets(conn, pinacle_markets)
-    add_lines(conn, pinacle_lines)
-
-    done = True # True while testing
+    done = False
     while not done:
         # add new markets
-        pinacle = await get_pinacle()
-        add_markets(conn, pinacle)
+        pinacle_markets, pinacle_lines= await get_pinacle()
+        add_markets(conn, pinacle_markets)  #initlaize markets
+        add_lines(conn, pinacle_lines)
         bet99 = await get_bet99()
-        add_markets(conn, bet99)
+        add_lines(conn, bet99)
         bodog = await get_bodog()
-        add_markets(conn, bodog)
+        add_lines(conn, bodog)
         try:
             sports_interaction = get_sports_interaction()
-            add_markets(conn, sports_interaction)
+            add_lines(conn, sports_interaction)
         except:
             pass
 

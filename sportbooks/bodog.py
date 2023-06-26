@@ -16,13 +16,13 @@ async def get_bodog():
         "Total Goals O/U":"total",
     }
 
-    markets = []
+    lines = []
     sportsbook = "Bodog"
     period = 0
 
     bet_type_keys = [f"'{key}'" for key in bet_type_dict]
     bet_type_query = f"[{', '.join(bet_type_keys)}]"
-    des_bets_exp = f"displayGroups[*].markets[?contains({bet_type_query}, description) && (period.description == 'Game' || period.description == 'Regulation Time')]"
+    des_bets_exp = f"displayGroups[*].lines[?contains({bet_type_query}, description) && (period.description == 'Game' || period.description == 'Regulation Time')]"
 
     responses = await get_data()
     for data in responses: 
@@ -55,9 +55,9 @@ async def get_bodog():
                         away, home = outcomes[i], outcomes[i+1]
                         away, home = away['price'], home['price'] 
                         if bet_type != 'total' and not reverse:
-                            home_payout, away_payout = home['decimal'], away['decimal']
+                            home_odds, away_payout = home['decimal'], away['decimal']
                         else:
-                            away_payout, home_payout = home['decimal'], away['decimal']
+                            away_payout, home_odds = home['decimal'], away['decimal']
 
                         if bet_type != 'moneyline':
                             if 'handicap2' in home:
@@ -74,11 +74,10 @@ async def get_bodog():
                             elif spun[0] == '-':
                                 spov = f"+{spov}"
 
-                        markets.append((sportsbook, matchup, bet_type, 
-                            period, date, home_team, away_team, home_payout, 
-                            away_payout, spov, spun
+                        lines.append((sportsbook, matchup, bet_type, 
+                            period, date, spov, spun, home_odds, away_payout 
                         ))
-    return markets
+    return lines
 
 async def get_data():
     leagues = (
