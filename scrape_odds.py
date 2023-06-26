@@ -150,14 +150,22 @@ def find_market_id(conn, market_data):
 
 def positive_ev(conn):
     positive_ev = '''
-        SELECT M.name 
-        FROM lines AS L1, lines as L2, markets as M
+        SELECT M.name, M.type, M.period, M.date, M.spov, M.spun, M.home_team, M.away_team, L1.sportsbook, L1.home_odds, L1.away_odds, L2.sportsbook, L2.home_odds, L2.away_odds
+        FROM (
+            SELECT MAX(line_id), sportsbook, market_id, home_odds, away_odds
+            FROM lines
+            GROUP BY sportsbook, market_id
+        ) as L1, ( 
+            SELECT MAX(line_id), sportsbook, market_id, home_odds, away_odds
+            FROM lines
+            GROUP BY sportsbook, market_id
+        ) as L2, markets as M
         WHERE L1.sportsbook = "Pinnacle"
-        AND L1.sportsbook = L2.sportsbook
         AND L1.sportsbook <> L2.sportsbook
         AND L1.market_id = L2.market_id
         AND ((L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds))
         OR (L2.away_odds > ((L1.home_odds + L1.away_odds) / L1.home_odds)))
+        AND L1.market_id = M.market_id
     '''
     cur = conn.cursor()
     return cur.execute(positive_ev)
