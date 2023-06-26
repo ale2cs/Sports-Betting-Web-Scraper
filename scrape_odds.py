@@ -125,21 +125,20 @@ def remove_old_markets(conn):
 
 def add_lines(conn, lines):
     cur = conn.cursor()
-    cur_date = datetime.now(timezone.utc).isoformat()
-    print(lines[0])
     insert = f'''
         INSERT INTO lines
         VALUES (null, (
-            SELECT market_id
-            FROM markets
-            WHERE name = ?
-            AND type = ?
-            AND period = ?
-            AND (abs(julianday(date) - julianday(?)) * 24 * 60) < 60 
-            AND spov = ?
-            AND spun = ?
+                SELECT market_id
+                FROM markets
+                WHERE name = ?
+                AND type = ?
+                AND period = ?
+                AND (abs(julianday(date) - julianday(?)) * 24 * 60) < 60 
+                AND spov = ?
+                AND spun = ?
+                ) 
+            , ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now')
         ) 
-        , ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%SZ','now')) 
     ''' 
     cur.executemany(insert, lines)
     conn.commit()
@@ -150,25 +149,18 @@ def find_market_id(conn, market_data):
     pass
 
 def positive_ev(conn):
-    find_markets = '''
-        SELECT M1.game, M1.type, M1.period, M1.date, M1.spov, M1.spun, 
-            M1.home_team, M1.away_team, M1.sportsbook, M1.home_payout, 
-            M1.away_payout, M2.sportsbook, M2.home_payout, M2.away_payout 
-        From markets AS M1, markets AS M2
-        WHERE M1.sportsbook = "Pinnacle" 
-        AND M1.sportsbook <> M2.sportsbook
-        AND M1.game = M2.game 
-        AND M1.type = M2.type 
-        AND M1.period = M2.period
-        AND M1.spov = M2.spov 
-        AND M1.spun = M2.spun 
-        AND M1.home_team = M2.home_team 
-        AND M1.away_team = M2.away_team 
-        AND (abs(julianday(M1.date) - julianday(M2.date)) * 24 * 60) < 60 
-        AND ((M2.home_payout > ((M1.home_payout + M1.away_payout) / M1.away_payout))
-        OR (M2.away_payout > ((M1.home_payout + M1.away_payout) / M1.home_payout)))'''
-    cur = conn.cursor() 
-    return cur.execute(find_markets)
+    positive_ev = '''
+        SELECT M.name 
+        FROM lines AS L1, lines as L2, markets as M
+        WHERE L1.sportsbook = "Pinnacle"
+        AND L1.sportsbook = L2.sportsbook
+        AND L1.sportsbook <> L2.sportsbook
+        AND L1.market_id = L2.market_id
+        AND ((L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds))
+        OR (L2.away_odds > ((L1.home_odds + L1.away_odds) / L1.home_odds)))
+    '''
+    cur = conn.cursor()
+    return cur.execute(positive_ev)
 
 
 def clear_terminal():
