@@ -10,7 +10,7 @@ async def get_888sport():
         "Money Line":"moneyline",
 
     }
-    markets = []
+    lines = []
     sportsbook = "888Sport"
     period = 0
     async with httpx.AsyncClient() as client:
@@ -20,13 +20,13 @@ async def get_888sport():
     responses = await get_data(games)
     for data in responses: 
         event = data['event']['details']['event']
-        lines = data['event']['markets']['markets_selections']
+        markets = data['event']['markets']['markets_selections']
         des_lines = data['event']['markets']['markets_selections']['gameLineMarket']['group_markets']
         matchup = event['name']
         date = event['scheduled_start']
         away_team, home_team = matchup.split(' @ ') 
         for line_id in des_lines:
-            market = lines[line_id]
+            market = markets[line_id]
             if 'options' in market:
                 options = market['options']
                 selections = market['selections']
@@ -52,7 +52,7 @@ async def get_888sport():
                 ))
 
 
-    return markets
+    return lines
 
 async def get_data(games):
     async with httpx.AsyncClient() as client:

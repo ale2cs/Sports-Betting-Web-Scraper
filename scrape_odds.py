@@ -4,12 +4,15 @@ from sqlite3 import Error
 from datetime import datetime, timezone
 import time
 import os
+import importlib
 
 from sportbooks.utils import *
 from sportbooks.bet99 import get_bet99
 from sportbooks.pinnacle import get_pinacle
 from sportbooks.sports_interaction import get_sports_interaction
 from sportbooks.bodog import get_bodog
+triple_eight_sport = importlib.import_module('sportbooks.888sport')
+get_888sport = getattr(triple_eight_sport, 'get_888sport')
 
 async def main():
     database = "./odds.db"
@@ -30,6 +33,8 @@ async def main():
         add_lines(conn, bet99)
         bodog = await get_bodog()
         add_lines(conn, bodog)
+        eights_sport = await get_888sport()
+        add_lines(conn, eights_sport)
         try:
             sports_interaction = get_sports_interaction()
             add_lines(conn, sports_interaction)
