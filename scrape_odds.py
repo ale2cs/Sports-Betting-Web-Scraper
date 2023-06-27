@@ -171,6 +171,7 @@ def positive_ev(conn):
         AND ((L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds))
         OR (L2.away_odds > ((L1.home_odds + L1.away_odds) / L1.home_odds)))
         AND L1.market_id = M.market_id
+        AND M.date > strftime('%Y-%m-%dT%H:%M:%SZ','now')
     '''
     cur = conn.cursor()
     return cur.execute(positive_ev)
