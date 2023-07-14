@@ -13,7 +13,7 @@ export const impliedProbability = (odds, odds2) => {
 export const noVigOdds = (odds, odds2) => {
     let [prob, prob2] = impliedProbability(odds, odds2);
     return (
-        [(1 / prob), (1 / prob2)]
+        [(1 / prob).toFixed(2), (1 / prob2).toFixed(2)]
     );
 }
 

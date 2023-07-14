@@ -14,8 +14,8 @@ export default function Navbar() {
             <div class="calculators-dropdown">
                 <span class="navbar-item">Calculators</span>
                 <div class="calculators-menu">
-                    <Link href="/betting-calculators/no-vig">No-Vig</Link>
                     <Link href="/betting-calculators/kelly-criterion">Kelly Criterion</Link>
+                    <Link href="/betting-calculators/margin">Margin-Vig</Link>
                     <Link href="/betting-calculators/odds-converter">Odds Converter</Link>
                 </div>
             </div>

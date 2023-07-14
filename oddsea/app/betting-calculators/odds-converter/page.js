@@ -20,7 +20,7 @@ export default function OddsConverter() {
     const changeDecimal= (event) => {
         let float = parseFloat(event.target.value);
         setDecimal(float);
-        setAmerican(decimalToAmerican(float));
+        setAmerican(decimalToAmerican(float).toFixed());
         setFractional(decimalToFractional(float));
     }
 
