@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model lines {
+  line_id      Int     @id @default(autoincrement())
+  market_id    Int?
+  sportsbook   String?
+  home_odds    Float?
+  away_odds    Float?
+  date_created String?
+}
+
+model markets {
+  market_id Int     @id @default(autoincrement())
+  name      String?
+  type      String?
+  period    String?
+  date      String?
+  home_team String?
+  away_team String?
+  spov      String?
+  spun      String?
+
+  @@unique([name, type, period, spov, spun], map: "sqlite_autoindex_markets_1")
+}

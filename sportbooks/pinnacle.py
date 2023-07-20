@@ -70,7 +70,7 @@ async def make_request(client, url):
     header = {
             "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R",
     }
-    resp = await client.get(url, headers=header)
+    resp = await client.get(url, headers=header, timeout=10)
     return resp.json()
 
 def parse_games(sport):

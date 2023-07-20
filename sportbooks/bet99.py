@@ -110,7 +110,7 @@ async def get_data():
     return responses
 
 async def make_request(client, url, query):
-    resp = await client.get(url, params=query)
+    resp = await client.get(url, params=query, timeout=10)
     return resp.json()
 
 def add_dec(string):

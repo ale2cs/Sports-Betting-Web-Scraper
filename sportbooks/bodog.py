@@ -107,5 +107,5 @@ async def make_request(client, url):
         "Accept-Encoding": "gzip, deflate, br",
     }
     query = {"preMatchOnly":"true"}
-    resp = await client.get(url, headers=headers, params=query)
+    resp = await client.get(url, headers=headers, params=query, timeout=10)
     return resp.json()
