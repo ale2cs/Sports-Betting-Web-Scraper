@@ -89,25 +89,29 @@ def create_tables(conn):
     create_markets = '''
         CREATE TABLE IF NOT EXISTS markets (
             market_id BIGSERIAL PRIMARY KEY, 
-            name TEXT, 
-            type TEXT,
-            period INT, 
-            date TEXT, 
-            home_team TEXT, 
-            away_team TEXT, 
-            spov TEXT, 
-            spun TEXT,
+            name TEXT NOT NULL, 
+            type TEXT NOT NULL,
+            period SMALLINT NOT NULL, 
+            date TEXT NOT NULL, 
+            home_team TEXT NOT NULL, 
+            away_team TEXT NOT NULL, 
+            spov TEXT NOT NULL, 
+            spun TEXT NOT NULL,
             CONSTRAINT unique_market UNIQUE (name, type, period, spov, spun)
         )
     '''
     create_lines = '''
         CREATE TABLE IF NOT EXISTS lines (
             line_id BIGSERIAL PRIMARY KEY,
-            market_id INT NOT NULL REFERENCES markets,
-            sportsbook TEXT,
-            home_odds FLOAT,
-            away_odds FLOAT,
-            created_at TEXT
+            market_id BIGINT NOT NULL,
+            sportsbook TEXT NOT NULL,
+            home_odds FLOAT NOT NULL,
+            away_odds FLOAT NOT NULL,
+            created_at TEXT NOT NULL,
+            CONSTRAINT fk_market_id
+                FOREIGN KEY (market_id)
+                REFERENCES markets(market_id)
+                ON DELETE CASCADE
         )
     '''
     # CONSTRAINT unique_line UNIQUE (market_id, sportsbook, home_odds, away_odds)
@@ -129,6 +133,45 @@ def add_markets(conn, markets):
 def add_lines(conn, lines):
     cur = conn.cursor()
     insert = """
+        WITH market AS (
+            SELECT market_id
+            FROM markets
+            WHERE name = %(matchup)s
+            AND type = %(bet_type)s
+            AND period = %(period)s
+            AND ABS(EXTRACT(EPOCH FROM AGE(
+                TO_TIMESTAMP(date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+                TO_TIMESTAMP(%(date)s, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            ))) / 3600 < 1
+            AND spov = %(spov)s
+            AND spun = %(spun)s
+        ),
+        recent_lines AS (
+			SELECT L2.*
+			FROM market M, (
+            	SELECT Max(line_id) AS line_id
+            	FROM lines
+            	GROUP BY market_id, sportsbook
+			) AS L1
+			JOIN lines AS L2 ON L1.line_id = L2.line_id
+            WHERE L2.market_id = M.market_id 
+            AND L2.sportsbook = %(sportsbook)s
+        )
+        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at) 
+        SELECT M.market_id, %(sportsbook)s, %(home_odds)s, %(away_odds)s, TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        FROM market M
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM recent_lines L
+            WHERE home_odds = %(home_odds)s
+            AND away_odds = %(away_odds)s
+        )
+    """
+    cur.executemany(insert, lines)
+    conn.commit()
+
+def positive_ev(conn):
+    positive_ev = """
         WITH recent_lines AS (
 			SELECT L2.*
 			FROM (
@@ -143,42 +186,14 @@ def add_lines(conn, lines):
             L1.sportsbook, L1.home_odds, L1.away_odds,
             L2.sportsbook AS sportsbook_2, L2.home_odds AS home_odds_2, L2.away_odds AS away_odds_
         FROM recent_lines AS L1
-        JOIN recent_lines AS L2 ON L1.market_id = L2.market_id
-        AND L1.sportsbook = 'Pinnacle'
+        JOIN recent_lines AS L2 ON L1.market_id = L2.market_id 
+        JOIN markets AS M ON L1.market_id = M.market_id
+        WHERE L1.sportsbook = 'Pinnacle'
         AND L1.sportsbook <> L2.sportsbook
         AND (L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds)
             OR L2.away_odds > ((L1.home_odds + L1.away_odds) / L1.home_odds))
-        JOIN markets AS M ON L1.market_id = M.market_id
-        WHERE TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() 
+        AND TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() 
     """
-    cur.executemany(insert, lines)
-    conn.commit()
-
-def positive_ev(conn):
-    positive_ev = '''
-        WITH recent_lines AS (
-            SELECT market_id, sportsbook, MAX(line_id) AS line_id
-            FROM lines
-            WHERE TO_TIMESTAMP(created_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > (NOW() - INTERVAL '2 minute')
-            GROUP BY market_id, sportsbook
-        ),
-        data_lines AS (
-            SELECT L2.line_id, L2.market_id, L2.sportsbook, L2.home_odds, L2.away_odds
-            FROM recent_lines AS L1
-            JOIN lines AS L2 ON L1.line_id = L2.line_id
-        )
-        SELECT M.name, M.type, M.period, M.date, M.spov, M.spun, M.home_team, M.away_team,
-            L1.sportsbook, L1.home_odds, L1.away_odds,
-            L2.sportsbook AS sportsbook_2, L2.home_odds AS home_odds_2, L2.away_odds AS away_odds_
-        FROM data_lines AS L1
-        JOIN data_lines AS L2 ON L1.market_id = L2.market_id
-        AND L1.sportsbook = 'Pinnacle'
-        AND L1.sportsbook <> L2.sportsbook
-        AND (L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds)
-            OR L2.away_odds > ((L1.home_odds + L1.away_odds) / L1.home_odds))
-        JOIN markets AS M ON L1.market_id = M.market_id
-        WHERE TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() 
-    '''
     cur = conn.cursor()
     cur.execute(positive_ev)
     return cur.fetchall()
