@@ -5,6 +5,14 @@ from datetime import datetime, timezone
 import time
 import os
 import importlib
+from dotenv import load_dotenv
+
+load_dotenv()
+db_host = os.getenv("DB_HOST")
+db_name = os.getenv("DB_NAME")
+db_user = os.getenv("DB_USER")
+db_password = os.getenv("DB_PASSWORD")
+db_port = os.getenv("DB_PORT")
 
 from sportbooks.utils import *
 from sportbooks.bet99 import get_bet99
@@ -64,7 +72,13 @@ async def main():
 def create_conn():
     conn = None
     try:
-        conn = psycopg2.connect(host="localhost", dbname="odds", user="postgres", port=5432)
+        conn = psycopg2.connect(
+            host = db_host, 
+            dbname = db_name, 
+            user = db_user, 
+            password = db_password,
+            port = db_port
+        )
     except Error as e:
         print(e)
 
