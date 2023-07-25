@@ -39,10 +39,11 @@ async def get_pinacle():
                     matchup, bet_type, period, date, home_team, away_team, 
                     spov, spun
                 ))
-                lines.append((
-                    matchup, bet_type, period, date, spov, spun, sportsbook, 
-                    home_odds, away_odds
-                ))
+                lines.append({
+                    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+                    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+                    'home_odds':home_odds, 'away_odds':away_odds
+                })
 
     return markets, lines
 

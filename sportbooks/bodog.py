@@ -74,10 +74,11 @@ async def get_bodog():
                             elif spun[0] == '-':
                                 spov = f"+{spov}"
 
-                        lines.append((
-                            matchup, bet_type, period, date, spov, spun, sportsbook, 
-                            home_odds, away_odds
-                        ))
+                        lines.append({
+                            'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+                            'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+                            'home_odds':home_odds, 'away_odds':away_odds
+                        })
     return lines
 
 async def get_data():

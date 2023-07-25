@@ -37,7 +37,7 @@ def get_sports_interaction():
 
 def scrape(url):
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/112.0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0",
         "Accept": "text/html, application/xhtml+xml",
         "Accept-Language": "en-US,en;q=0.5",
         "Accept-Encoding": "gzip, deflate, br",
@@ -58,7 +58,7 @@ def scrape(url):
             'platform':'android'
         },
         delay=10,
-        ssl_context=ssl._create_unverified_context(),
+        # ssl_context=ssl._create_unverified_context(),
     )
     resp = scraper.get(url, headers=headers)
     return resp.json()
@@ -119,10 +119,10 @@ def scrape_lines(game_data, bet_type_dict):
             for market in market_data:
                 line = market['runners']
                 # over/under and spread can swap home and away values
-                if bet['betTypeId'] == 704 or bet['betTypeId'] == 795:
-                    away, home = line[order[0]], line[order[1]]
-                else:
-                    home, away = line[order[0]], line[order[1]]
+                # if bet['betTypeId'] == 704 or bet['betTypeId'] == 795:
+                #    away, home = line[order[0]], line[order[1]]
+                # else:
+                home, away = line[order[0]], line[order[1]]
                 home_odds = rnd_dec(home['currentPrice'], dec) + 1
                 away_odds = rnd_dec(away['currentPrice'], dec) + 1
                 spov, spun = str(home['handicap']), str(away['handicap'])
@@ -133,10 +133,12 @@ def scrape_lines(game_data, bet_type_dict):
                         spov = f"+{spov}"
                 elif bet_type == 'moneyline':
                     spov = spun = ''
-                lines.append((
-                    matchup, bet_type, period, date, spov, spun, sportsbook, 
-                    home_odds, away_odds
-                ))
+
+                lines.append({
+                    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+                    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+                    'home_odds':home_odds, 'away_odds':away_odds
+                })
 
     return lines
 

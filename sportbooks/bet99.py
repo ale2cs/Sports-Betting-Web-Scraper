@@ -80,10 +80,12 @@ async def get_bet99():
                     spov = f"{spov[0]}{add_dec(spov[1:])}"
                 else:
                     spov, spun = add_dec(spov), add_dec(spun)
-                lines.append((
-                    matchup, bet_type, period, date, spov, spun, sportsbook, 
-                    home_odds, away_odds
-                ))
+                lines.append({
+                    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+                    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+                    'home_odds':home_odds, 'away_odds':away_odds
+                })
+
 
     return lines
 
