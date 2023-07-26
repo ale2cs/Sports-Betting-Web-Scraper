@@ -108,6 +108,7 @@ def create_tables(conn):
             home_odds FLOAT NOT NULL,
             away_odds FLOAT NOT NULL,
             created_at TEXT NOT NULL,
+            updated_at TExT NOT NULL,
             CONSTRAINT fk_market_id
                 FOREIGN KEY (market_id)
                 REFERENCES markets(market_id)
@@ -147,24 +148,32 @@ def add_lines(conn, lines):
             AND spun = %(spun)s
         ),
         recent_lines AS (
-			SELECT L2.*
-			FROM market M, (
-            	SELECT Max(line_id) AS line_id
+            SELECT Max(line_id) AS line_id
             	FROM lines
             	GROUP BY market_id, sportsbook
-			) AS L1
+        ),
+        recent_line AS (
+			SELECT L2.*
+			FROM market M, recent_lines L1
 			JOIN lines AS L2 ON L1.line_id = L2.line_id
             WHERE L2.market_id = M.market_id 
             AND L2.sportsbook = %(sportsbook)s
+        ),
+        updated_row AS (
+            UPDATE lines L1
+            SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            FROM recent_line AS L2
+            WHERE L1.line_id = L2.line_id
+            AND L1.home_odds = %(home_odds)s
+            AND L1.away_odds = %(away_odds)s
+            RETURNING *
         )
-        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at) 
-        SELECT M.market_id, %(sportsbook)s, %(home_odds)s, %(away_odds)s, TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
+        SELECT M.market_id, %(sportsbook)s, %(home_odds)s, %(away_odds)s, TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
         FROM market M
         WHERE NOT EXISTS (
             SELECT 1
-            FROM recent_lines L
-            WHERE home_odds = %(home_odds)s
-            AND away_odds = %(away_odds)s
+            FROM updated_row
         )
     """
     cur.executemany(insert, lines)
@@ -172,11 +181,14 @@ def add_lines(conn, lines):
 
 def positive_ev(conn):
     positive_ev = """
-        WITH recent_lines AS (
+        WITH recent_line AS (
 			SELECT L2.*
 			FROM (
             	SELECT Max(line_id) AS line_id
             	FROM lines
+                WHERE ABS(EXTRACT(EPOCH FROM AGE(
+                    TO_TIMESTAMP(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), NOW()
+                ))) / 60 < 2
             	GROUP BY market_id, sportsbook
 			) AS L1
 			JOIN lines AS L2
@@ -185,8 +197,8 @@ def positive_ev(conn):
         SELECT M.name, M.type, M.period, M.date, M.spov, M.spun, M.home_team, M.away_team,
             L1.sportsbook, L1.home_odds, L1.away_odds,
             L2.sportsbook AS sportsbook_2, L2.home_odds AS home_odds_2, L2.away_odds AS away_odds_
-        FROM recent_lines AS L1
-        JOIN recent_lines AS L2 ON L1.market_id = L2.market_id 
+        FROM recent_line AS L1
+        JOIN recent_line AS L2 ON L1.market_id = L2.market_id 
         JOIN markets AS M ON L1.market_id = M.market_id
         WHERE L1.sportsbook = 'Pinnacle'
         AND L1.sportsbook <> L2.sportsbook
