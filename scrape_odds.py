@@ -88,7 +88,7 @@ def create_tables(conn):
     cur = conn.cursor()
     create_markets = '''
         CREATE TABLE IF NOT EXISTS markets (
-            market_id BIGSERIAL PRIMARY KEY, 
+            market_id SERIAL PRIMARY KEY, 
             name TEXT NOT NULL, 
             type TEXT NOT NULL,
             period SMALLINT NOT NULL, 
@@ -102,8 +102,8 @@ def create_tables(conn):
     '''
     create_lines = '''
         CREATE TABLE IF NOT EXISTS lines (
-            line_id BIGSERIAL PRIMARY KEY,
-            market_id BIGINT NOT NULL,
+            line_id SERIAL PRIMARY KEY,
+            market_id INT NOT NULL,
             sportsbook TEXT NOT NULL,
             home_odds FLOAT NOT NULL,
             away_odds FLOAT NOT NULL,

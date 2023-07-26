@@ -8,8 +8,8 @@ datasource db {
 }
 
 model lines {
-  line_id    BigInt  @id @default(autoincrement())
-  market_id  BigInt
+  line_id    Int     @id @default(autoincrement())
+  market_id  Int
   sportsbook String
   home_odds  Float
   away_odds  Float
@@ -18,7 +18,7 @@ model lines {
 }
 
 model markets {
-  market_id BigInt  @id @default(autoincrement())
+  market_id Int     @id @default(autoincrement())
   name      String
   type      String
   period    Int     @db.SmallInt

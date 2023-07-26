@@ -1,11 +1,7 @@
-const { PrismaClient } = require('@prisma/client')
-
-const prisma = new PrismaClient()
+const { prisma } = require('@/lib/prisma')
 
 async function main() {
   // ... you will write your Prisma Client queries here
-  const allMarkets = await prisma.markets.findMany()
-  console.log(allMarkets)
 }
 
 main()
