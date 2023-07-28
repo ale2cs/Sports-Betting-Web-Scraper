@@ -1,7 +1,7 @@
-import Image from 'next/image'
-import styles from './page.module.css'
-import Markets from "@/app/components/markets"
-import Lines from "@/app/components/lines"
+import Image from "next/image";
+import styles from "./page.module.css";
+import Markets from "@/components/markets";
+import Lines from "@/components/lines";
 
 export default function Home() {
   return (
@@ -10,5 +10,5 @@ export default function Home() {
       <Markets />
       <Lines />
     </main>
-  )
+  );
 }

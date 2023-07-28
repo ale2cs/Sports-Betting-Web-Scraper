@@ -15,8 +15,5 @@
     "next": "13.4.5",
     "react": "18.2.0",
     "react-dom": "18.2.0"
-  },
-  "devDependencies": {
-    "prisma": "^5.0.0"
   }
 }
