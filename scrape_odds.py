@@ -35,9 +35,9 @@ async def main():
         pinacle_markets, pinacle_lines= await get_pinacle()
         add_markets(conn, pinacle_markets)  #initlaize markets
         add_lines(conn, pinacle_lines)
-        # bet99 = await get_bet99()
-        # add_lines(conn, bet99)
+        bet99 = await get_bet99()
         bodog = await get_bodog()
+        add_lines(conn, bet99)
         add_lines(conn, bodog)
         # eights_sport = await get_888sport()
         # add_lines(conn, eights_sport)
@@ -86,9 +86,9 @@ def create_conn():
 
 def create_tables(conn):
     cur = conn.cursor()
-    create_markets = '''
+    create_markets = """
         CREATE TABLE IF NOT EXISTS markets (
-            market_id SERIAL PRIMARY KEY, 
+            market_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, 
             name TEXT NOT NULL, 
             type TEXT NOT NULL,
             period SMALLINT NOT NULL, 
@@ -97,12 +97,12 @@ def create_tables(conn):
             away_team TEXT NOT NULL, 
             spov TEXT NOT NULL, 
             spun TEXT NOT NULL,
-            CONSTRAINT unique_market UNIQUE (name, type, period, spov, spun)
+            CONSTRAINT unique_market UNIQUE (name, type, period, date, spov, spun)
         )
-    '''
-    create_lines = '''
+    """
+    create_lines = """
         CREATE TABLE IF NOT EXISTS lines (
-            line_id SERIAL PRIMARY KEY,
+            line_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             market_id INT NOT NULL,
             sportsbook TEXT NOT NULL,
             home_odds FLOAT NOT NULL,
@@ -114,8 +114,7 @@ def create_tables(conn):
                 REFERENCES markets(market_id)
                 ON DELETE CASCADE
         )
-    '''
-    # CONSTRAINT unique_line UNIQUE (market_id, sportsbook, home_odds, away_odds)
+    """
     cur.execute(create_markets)
     cur.execute(create_lines)
     conn.commit()
@@ -196,7 +195,7 @@ def positive_ev(conn):
         )
         SELECT M.name, M.type, M.period, M.date, M.spov, M.spun, M.home_team, M.away_team,
             L1.sportsbook, L1.home_odds, L1.away_odds,
-            L2.sportsbook AS sportsbook_2, L2.home_odds AS home_odds_2, L2.away_odds AS away_odds_
+            L2.sportsbook AS sportsbook_2, L2.home_odds AS home_odds_2, L2.away_odds AS away_odds_2
         FROM recent_line AS L1
         JOIN recent_line AS L2 ON L1.market_id = L2.market_id 
         JOIN markets AS M ON L1.market_id = M.market_id

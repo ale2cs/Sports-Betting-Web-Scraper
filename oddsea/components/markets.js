@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 
 const getMarkets = async () => {
   try {
-    const resp = await fetch("http://localhost:8000/markets", {
+    const resp = await fetch("http://localhost:8080/markets", {
       cache: "no-store",
     });
     if (!resp.ok) {
@@ -12,7 +12,7 @@ const getMarkets = async () => {
     return resp.json();
   } catch (error) {
     console.error(error);
-    return {};
+    return [];
   }
 };
 
@@ -33,7 +33,7 @@ export default function ListMarkets() {
       {markets.map((market) => (
         <div key={market.market_id}>
           <h3>
-            {market.name} {market.type} {market.spov} {market.spun}{" "}
+            {market.name} {market.type} {market.spov} {market.spun}
           </h3>
         </div>
       ))}

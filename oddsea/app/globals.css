@@ -1,5 +1,8 @@
-.main-container {
+body {
   font-family: Tahoma;
+}
+
+.main-container {
   width: 45em;
   margin: 0 auto;
 }
