@@ -36,8 +36,8 @@ async def main():
         add_markets(conn, pinacle_markets)  #initlaize markets
         add_lines(conn, pinacle_lines)
         bet99 = await get_bet99()
-        bodog = await get_bodog()
         add_lines(conn, bet99)
+        bodog = await get_bodog()
         add_lines(conn, bodog)
         # eights_sport = await get_888sport()
         # add_lines(conn, eights_sport)

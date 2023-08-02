@@ -7,7 +7,7 @@ dayjs.extend(relativeTime);
 
 const getPositiveLines = async () => {
   try {
-    const resp = await fetch("http://localhost:8080/positive-lines-test", {
+    const resp = await fetch("http://localhost:8080/positive-lines", {
       cache: "no-store",
     });
     if (!resp.ok) {

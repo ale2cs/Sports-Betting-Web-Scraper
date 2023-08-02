@@ -4,6 +4,13 @@ from datetime import datetime, timezone, timedelta
 def flatten(list_to_flatten):
     return [item for sub_list in list_to_flatten for item in sub_list]
 
+
+def add_dec(string):
+    if string.isdigit():
+        string = f"{string}.0"
+    return string
+
+
 def rnd_dec(number, decimals):
     # Returns a value rounded down to a specific number of decimal places.
     if not isinstance(decimals, int):

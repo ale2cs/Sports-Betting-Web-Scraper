@@ -1,6 +1,6 @@
 import asyncio
 import httpx
-import jmespath
+from sportbooks.utils import flatten, add_dec
 
 async def get_bet99():
     team_dict = {
@@ -28,66 +28,40 @@ async def get_bet99():
         'SAS':'San Antonio', 'UTA':'Utah',
         
         # MLB
-        "BAL":"Baltimore", "CIN":"Cincinnati", "KC":"Kansas",
-        "OAK":"Oakland", "SD":"San Diego", "SF":"San Francisco",
-        "TEX":"Texas", "WAS":"Washington",
+        'BAL':'Baltimore', 'CIN':"Cincinnati", 'KC':'Kansas',
+        'OAK':'Oakland', 'SD':'San Diego', 'SF':'San Francisco',
+        'TEX':'Texas', 'WAS':'Washington',
     }
     bet_type_dict = {
-        "Money Line": "moneyline", 
-        "Total":"total", "Spread":"spread", 
-        "Money Line (AL)":"moneyline", 
-        "Total (AL)":"total", 
-        "Spread (AL)":"spread",
+        'Money Line': 'moneyline', 
+        'Total':'total', 'Spread':'spread', 
+        'Money Line (AL)':'moneyline', 
+        'Total (AL)':'total', 
+        'Spread (AL)':'spread',
     }
     lines = []
-    sportsbook = "Bet99"
-    period = 0  
- 
-    # expressions
-    bet_type_keys = [f"'{key}'" for key in bet_type_dict]
-    bet_type_query = f"[{', '.join(bet_type_keys)}]"
-    des_bets_exp = f"Events[*].Items[?contains({bet_type_query}, Name)]"
-    events_exp = "Events[*]"
     
     responses = await get_data()
     for resp in responses:
         if not resp['Result']['Items']:
             continue
         data = resp['Result']['Items'][0]
-        # searches
-        game_bets = jmespath.search(des_bets_exp, data) 
-        events = jmespath.search(events_exp, data)
+        game_bets = parse_markets(data, bet_type_dict) 
+        events = data['Events']
 
         for bets, event in zip(game_bets, events):
+            values = {}
             matchup = event['Name']
-            date = event['EventDate']
+            values['date'] = event['EventDate']
             home_team, away_team = matchup.split(' vs. ')
             home_abbr = home_team.split(' ')[0] 
             away_abbr = away_team.split(' ')[0] 
             home_team = home_team.replace(home_abbr, team_dict[home_abbr])
             away_team = away_team.replace(away_abbr, team_dict[away_abbr])
-            matchup = f'{away_team} @ {home_team}'
-            for bet in bets:
-                bet_type = bet_type_dict[bet['Name']]
-                home, away = bet['Items'][0], bet['Items'][1] 
-                home_odds, away_odds = home['Price'], away['Price']
-                spov, spun = home['SPOV'], away['SPOV']
-                if bet_type == "spread":
-                    if spov[0] == '-':
-                        spun = f"+{add_dec(spun[1:])}"
-                    else:
-                        spun = f"-{add_dec(spun[1:])}" 
-                    spov = f"{spov[0]}{add_dec(spov[1:])}"
-                else:
-                    spov, spun = add_dec(spov), add_dec(spun)
-                lines.append({
-                    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-                    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-                    'home_odds':home_odds, 'away_odds':away_odds
-                })
+            values['matchup'] = f'{away_team} @ {home_team}'
+            lines.append(format_lines(bets, values, bet_type_dict))
+    return flatten(lines)
 
-
-    return lines
 
 async def get_data():
     url = "https://sb2frontend-altenar2.biahosted.com/api/Sportsbook/GetEvents" 
@@ -111,11 +85,45 @@ async def get_data():
         responses = await asyncio.gather(*tasks)
     return responses
 
+
 async def make_request(client, url, query):
     resp = await client.get(url, params=query, timeout=10)
     return resp.json()
+    
 
-def add_dec(string):
-    if string.isdigit():
-        string = f"{string}.0"
-    return string
+def parse_markets(data, bet_type_dict):
+    markets = []
+    events = data['Events']
+    for event in events:
+        items = []
+        for item in event['Items']:
+            if item['Name'] in bet_type_dict and item['Status'] != 2:  # No locked market
+                items.append(item)
+        markets.append(items)
+    return markets
+
+
+def format_lines(bets, values, bet_type_dict):
+    lines = []
+    date, matchup = values.values()
+    sportsbook = 'Bet99'
+    period = 0  
+    for bet in bets:
+        bet_type = bet_type_dict[bet['Name']]
+        home, away = bet['Items'][0], bet['Items'][1] 
+        home_odds, away_odds = home['Price'], away['Price']
+        spov, spun = home['SPOV'], away['SPOV']
+        if bet_type == "spread":
+            if spov[0] == '-':
+                spun = f"+{add_dec(spun[1:])}"
+            else:
+                spun = f"-{add_dec(spun[1:])}" 
+            spov = f"{spov[0]}{add_dec(spov[1:])}"
+        else:
+            spov, spun = add_dec(spov), add_dec(spun)
+        lines.append({
+            'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+            'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+            'home_odds':home_odds, 'away_odds':away_odds
+        })
+    return lines
