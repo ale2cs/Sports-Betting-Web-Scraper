@@ -1,6 +1,7 @@
 import asyncio
 import httpx
-from sportsbooks.utils import american_to_decimal, flatten
+from utils.calcs import american_to_decimal
+from utils.helpers import flatten
 
 async def get_pinacle():
     markets = []

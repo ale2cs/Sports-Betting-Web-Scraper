@@ -1,7 +1,7 @@
 import asyncio
 import psycopg2
 from sqlite3 import Error
-from datetime import datetime, timezone
+from datetime import datetime
 import time
 import os
 import importlib
@@ -14,7 +14,8 @@ db_user = os.getenv("DB_USER")
 db_password = os.getenv("DB_PASSWORD")
 db_port = os.getenv("DB_PORT")
 
-from sportsbooks.utils import *
+from utils.calcs import *
+from utils.dates import *
 from sportsbooks.bet99 import get_bet99
 from sportsbooks.pinnacle import get_pinacle
 from sportsbooks.sports_interaction import get_sports_interaction

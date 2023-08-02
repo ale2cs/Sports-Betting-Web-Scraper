@@ -1,15 +1,11 @@
 import math
-from datetime import datetime, timezone, timedelta
 
-def flatten(list_to_flatten):
-    return [item for sub_list in list_to_flatten for item in sub_list]
-
-
-def add_dec(string):
-    if string.isdigit():
-        string = f"{string}.0"
-    return string
-
+def american_to_decimal(number):
+    dec = 3
+    if (number > 0):
+        return rnd_dec(1 + (number / 100), dec)
+    else:
+        return rnd_dec(1 - (100 / number), dec)
 
 def rnd_dec(number, decimals):
     # Returns a value rounded down to a specific number of decimal places.
@@ -22,13 +18,6 @@ def rnd_dec(number, decimals):
 
     factor = 10 ** decimals
     return math.floor(number * factor) / factor
-
-def american_to_decimal(number):
-    dec = 3
-    if (number > 0):
-        return rnd_dec(1 + (number / 100), dec)
-    else:
-        return rnd_dec(1 - (100 / number), dec)
 
 def imp_prob(odds1, odds2):
     return (odds2 / (odds1 + odds2)), (odds1 / (odds1 + odds2))
@@ -57,12 +46,3 @@ def wager(bankroll, odds1, odds2, odds3):
     multiplier = 0.20
     kelly = kelly_criterion(prob1, odds3)
     return multiplier * kelly * bankroll
-
-def rem_time(time):
-    return datetime.fromisoformat(time) - datetime.fromisoformat(datetime.now(timezone.utc).isoformat())
-
-def over_max_hours(time, hours):
-    return datetime.fromisoformat(time) > (datetime.fromisoformat((datetime.now(timezone.utc) + timedelta(hours=hours)).isoformat()))
-
-def epoch_to_iso(time):
-    return f"{datetime.utcfromtimestamp(time).isoformat()}Z"

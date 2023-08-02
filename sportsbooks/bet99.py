@@ -1,6 +1,6 @@
 import asyncio
 import httpx
-from sportsbooks.utils import flatten, add_dec
+from utils.helpers import flatten, add_dec
 
 async def get_bet99():
     team_dict = {
