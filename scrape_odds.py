@@ -14,12 +14,12 @@ db_user = os.getenv("DB_USER")
 db_password = os.getenv("DB_PASSWORD")
 db_port = os.getenv("DB_PORT")
 
-from sportbooks.utils import *
-from sportbooks.bet99 import get_bet99
-from sportbooks.pinnacle import get_pinacle
-from sportbooks.sports_interaction import get_sports_interaction
-from sportbooks.bodog import get_bodog
-triple_eight_sport = importlib.import_module('sportbooks.888sport')
+from sportsbooks.utils import *
+from sportsbooks.bet99 import get_bet99
+from sportsbooks.pinnacle import get_pinacle
+from sportsbooks.sports_interaction import get_sports_interaction
+from sportsbooks.bodog import get_bodog
+triple_eight_sport = importlib.import_module('sportsbooks.888sport')
 get_888sport = getattr(triple_eight_sport, 'get_888sport')
 
 async def main():

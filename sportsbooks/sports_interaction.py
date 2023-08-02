@@ -3,7 +3,7 @@ import cloudscraper
 from concurrent.futures import ThreadPoolExecutor
 import jmespath
 import ssl
-from sportbooks.utils import rnd_dec
+from sportsbooks.utils import rnd_dec
 
 
 def get_sports_interaction():

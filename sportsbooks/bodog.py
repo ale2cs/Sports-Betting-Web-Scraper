@@ -1,7 +1,7 @@
 import asyncio
 import httpx
 import jmespath
-from sportbooks.utils import epoch_to_iso
+from sportsbooks.utils import epoch_to_iso
 
 async def get_bodog():
     bet_type_dict = {
