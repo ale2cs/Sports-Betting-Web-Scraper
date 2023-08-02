@@ -20,6 +20,8 @@ model lines {
 
 model markets {
   market_id Int     @id @default(autoincrement())
+  sport     String
+  league    String
   name      String
   type      String
   period    Int     @db.SmallInt
@@ -30,5 +32,5 @@ model markets {
   spun      String
   lines     lines[]
 
-  @@unique([name, type, period, spov, spun], map: "unique_market")
+  @@unique([name, type, period, date, spov, spun], map: "unique_market")
 }

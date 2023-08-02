@@ -1,10 +1,13 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useTable } from "react-table";
+import * as dayjs from "dayjs";
+import * as relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
 
 const getPositiveLines = async () => {
   try {
-    const resp = await fetch("http://localhost:8080/positive-lines", {
+    const resp = await fetch("http://localhost:8080/positive-lines-test", {
       cache: "no-store",
     });
     if (!resp.ok) {
@@ -22,8 +25,11 @@ export default function ListPositiveLines() {
   const columns = React.useMemo(
     () => [
       {
-        Header: "Date",
+        Header: "Time From Now",
         accessor: "date",
+        Cell: ({ cell: { value } }) => {
+          return `🕒 ${dayjs(value).fromNow()}`;
+        },
       },
       {
         Header: "Event",

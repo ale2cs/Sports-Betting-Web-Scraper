@@ -14,6 +14,8 @@ CREATE TABLE "lines" (
 -- CreateTable
 CREATE TABLE "markets" (
     "market_id" SERIAL NOT NULL,
+    "sport" TEXT NOT NULL,
+    "league" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "period" SMALLINT NOT NULL,
@@ -27,7 +29,7 @@ CREATE TABLE "markets" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "unique_market" ON "markets"("name", "type", "period", "spov", "spun");
+CREATE UNIQUE INDEX "unique_market" ON "markets"("name", "type", "period", "date", "spov", "spun");
 
 -- AddForeignKey
 ALTER TABLE "lines" ADD CONSTRAINT "fk_market_id" FOREIGN KEY ("market_id") REFERENCES "markets"("market_id") ON DELETE CASCADE ON UPDATE NO ACTION;

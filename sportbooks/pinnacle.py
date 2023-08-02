@@ -1,51 +1,30 @@
 import asyncio
 import httpx
-import jmespath
-from sportbooks.utils import american_to_decimal
+from sportbooks.utils import american_to_decimal, flatten
 
 async def get_pinacle():
     markets = []
     lines = []
+    bet_type_dict = {'moneyline':0, 'total':1, 'spread':2}  # Desired markets
     games, values = await get_data()
-    sportsbook = "Pinnacle"
-    bet_type_dict = {"moneyline":0, "total":1, "spread":2} 
-    bet_type_keys = [f'`{key}`' for key in bet_type_dict]
-    bet_type_query = f"[{', '.join(bet_type_keys)}]"
 
     for sport, prices in zip(games, values):
-        for game_id, teams, time in parse_games(sport):
+        for game_id, league, teams, time in parse_games(sport):
+            market_values = {} 
             home_team, away_team = teams[0]['name'], teams[1]['name']
-            matchup = f"{away_team} @ {home_team}"
-            date = time['cutoffAt']
-            period = time['period']
-            matching_id_exp = f"[?matchupId == `{game_id}` && period == `0` && contains({bet_type_query}, type)]"
-            market_data = jmespath.search(matching_id_exp, prices)
-            for data in market_data:
-                bet_type = data['type']
-                if len(data['prices']) != 2:  # only two outcomes
-                    continue
-                home, away = data['prices'][0], data['prices'][1]
-                home_odds = american_to_decimal(home['price']) 
-                away_odds = american_to_decimal(away['price'])
-                if ('points' in home):
-                    spov, spun = str(home['points']), str(away['points'])
-                    if (spov[0] == '-'):
-                        spun = f"+{spun}"
-                    elif (spun[0] == '-'):
-                        spov = f"+{spov}"
-                else:
-                    spov = spun = ''
-                markets.append((
-                    matchup, bet_type, period, date, home_team, away_team, 
-                    spov, spun
-                ))
-                lines.append({
-                    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-                    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-                    'home_odds':home_odds, 'away_odds':away_odds
-                })
+            market_values['league'] = league['name']
+            market_values['sport'] = league['sport']['name']
+            market_values['home_team'] = home_team
+            market_values['away_team'] = away_team
+            market_values['matchup'] = f"{away_team} @ {home_team}"
+            market_values['date'] = time['cutoffAt']
+            market_values['period'] = time['period']
+            market_data = parse_markets(prices, game_id, bet_type_dict)
+            parsed_markets, parsed_lines = parse_market_data(market_data, market_values)
+            markets.append(parsed_markets)
+            lines.append(parsed_lines)
+    return flatten(markets), flatten(lines)
 
-    return markets, lines
 
 async def get_data():
     sport_codes = [
@@ -67,6 +46,7 @@ async def get_data():
         values = await asyncio.gather(*value_tasks)    
     return games, values
 
+
 async def make_request(client, url):
     header = {
             "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R",
@@ -74,14 +54,25 @@ async def make_request(client, url):
     resp = await client.get(url, headers=header, timeout=10)
     return resp.json()
 
+
 def parse_games(sport):
-    # parses desired betting markets
-    des_bets_exp = "[?periods[0].period == `0` && parent != None && periods[0].cutoffAt != None][parentId, parent.participants, periods[0]]"
-    bets = jmespath.search(des_bets_exp, sport)
+    bets = []
+    for line in sport:
+        periods = line['periods'][0]
+        if (periods['period'] == 0 and
+            line['parent'] != None and
+            periods['cutoffAt'] != None):
+                bets.append([line['parentId'], line['league'], line['parent']['participants'], periods]) 
+    # Loop may not be necessary
     if not bets:
-        alt_exp = "[?periods[0].period == `0` && periods[0].cutoffAt != None][id, participants, periods[0]]"
-        bets = jmespath.search(alt_exp, sport)
+        for line in sport:
+            periods = line['periods'][0]
+            if (periods['period'] == 0 and
+                periods['cutoffAt'] != None and
+                line['participants'][0]['alignment'] != 'neutral'):
+                bets.append([line['id'], line['league'], line['participants'], periods])
     return remove_duplicate_games(bets)
+
 
 def remove_duplicate_games(games):
     unique_ids = []
@@ -92,3 +83,45 @@ def remove_duplicate_games(games):
             unique_ids.append(game_id)
             unique_games.append(item)
     return unique_games
+
+
+def parse_markets(prices, game_id, bet_type_dict):
+    markets = []
+    for price in prices:
+        if (price['matchupId'] == game_id and 
+            price['period'] == 0 and  # Only full game markets
+            price['type'] in bet_type_dict):
+            markets.append(price)
+    return markets 
+
+
+def parse_market_data(market_data, market_values):
+    markets = []
+    lines = []
+    sportsbook = 'Pinnacle'
+    league, sport, home_team, away_team, matchup, date, period = market_values.values()
+    for data in market_data:
+        bet_type = data['type']
+        if len(data['prices']) != 2:  # Only markets with two outcomes
+            continue
+        home, away = data['prices'][0], data['prices'][1]
+        home_odds = american_to_decimal(home['price']) 
+        away_odds = american_to_decimal(away['price'])
+        if ('points' in home):
+            spov, spun = str(home['points']), str(away['points'])
+            if (spov[0] == '-'):
+                spun = f'+{spun}'
+            elif (spun[0] == '-'):
+                spov = f'+{spov}'
+        else:
+            spov = spun = ''
+        markets.append((
+            sport, league, matchup, bet_type, period, date, home_team, 
+            away_team, spov, spun
+        ))
+        lines.append({
+            'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+            'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+            'home_odds':home_odds, 'away_odds':away_odds
+        })
+    return markets, lines

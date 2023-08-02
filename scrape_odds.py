@@ -89,6 +89,8 @@ def create_tables(conn):
     create_markets = """
         CREATE TABLE IF NOT EXISTS markets (
             market_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, 
+            sport TEXT NOT NULL,
+            league TEXT NOT NULL,
             name TEXT NOT NULL, 
             type TEXT NOT NULL,
             period SMALLINT NOT NULL, 
@@ -122,8 +124,8 @@ def create_tables(conn):
 def add_markets(conn, markets):
     cur = conn.cursor()
     insert = """
-        INSERT INTO markets (name, type, period, date, home_team, away_team, spov, spun)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         ON CONFLICT DO NOTHING
     """
     cur.executemany(insert, markets)
