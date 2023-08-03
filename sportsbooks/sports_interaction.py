@@ -1,10 +1,6 @@
-import httpx
 import cloudscraper
 from concurrent.futures import ThreadPoolExecutor
-import jmespath
-import ssl
 from utils.calcs import rnd_dec
-
 
 def get_sports_interaction():
     # Scrapes Sports Interaction and returns lines
@@ -26,14 +22,30 @@ def get_sports_interaction():
         "https://www.sportsinteraction.com/basketball/nba-betting-lines/",
         "https://www.sportsinteraction.com/baseball/mlb-betting-lines/",
         "https://www.sportsinteraction.com/baseball/national-league-betting-lines/",
-        #"https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
-        #"https://www.sportsinteraction.com/basketball/wnba-betting-lines/"
+        # "https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
+        # "https://www.sportsinteraction.com/basketball/wnba-betting-lines/"
     ]
 
     game_urls = scrape_game_urls(sport_urls)
-    game_data = scrape_game_data(game_urls)
-
+    game_data = scrape_game_data(game_urls) 
     return scrape_lines(game_data, bet_type_dict)
+
+
+def scrape_game_urls(sport_urls):
+    game_urls = []
+
+    with ThreadPoolExecutor() as executor:
+        responses = executor.map(scrape, sport_urls)
+    for resp in responses:
+        games = resp['props']['games']
+        for game in games:
+            if (not valid_game_name(game['gameName'])):
+                continue
+            gamePath = game['gamePath']
+            game_urls.append(f"https://www.sportsinteraction.com{gamePath}")
+
+    return game_urls
+
 
 def scrape(url):
     headers = {
@@ -64,88 +76,37 @@ def scrape(url):
     return resp.json()
 
 
-def scrape_game_urls(sport_urls):
-    game_urls = []
+def valid_game_name(game_name):
+    # game name cannot exceed 7 words
+    words = game_name.split(' ')
+    return len(words) <= 7
 
-    with ThreadPoolExecutor() as executor:
-        responses = executor.map(scrape, sport_urls)
-    for resp in responses:
-        games = resp['props']['games']
-        for game in games:
-            if (not valid_game_name(game['gameName'])):
-                continue
-            gamePath = game['gamePath']
-            game_urls.append(f"https://www.sportsinteraction.com{gamePath}")
-
-    return game_urls
 
 def scrape_game_data(game_urls):
     with ThreadPoolExecutor() as executor:
         responses = executor.map(scrape, game_urls)
     return responses
 
+
 def scrape_lines(game_data, bet_type_dict):
-    lines = []
-    sportsbook = "Sports Interaction"
-    period = 0
-    dec = 3
-    
-    market_exp = "betTypes[0].events[*]"
+    lines = []    
     for resp in game_data:
+        market_values = {}
         data = resp['props']
-
-        matchup = clean_matchup(data['game']['fullName'])
-        if '@' in matchup:
-            away_team, home_team = matchup.split(' @ ')
-        elif 'v' in matchup:
-            home_team, away_team = matchup.split(' v ')
-            matchup = f"{away_team} @ {home_team}"
-        else:
-            continue
+        market_values['matchup'] = clean_matchup(data['game']['fullName'])
         date = data['game']['date']
-        date = date.replace('.000', '')
+        market_values['date'] = date.replace('.000', '')
+        markets = parse_markets(data, bet_type_dict) 
 
-        bet_type_keys = [f'`{key}`' for key in bet_type_dict]
-        bet_type_query = f"[{', '.join(bet_type_keys)}]"
-        des_bets_exp = (
-            f"gameData.betTypeGroups[?contains({bet_type_query}, betTypeId)]"
-        )
-
-        bets = jmespath.search(des_bets_exp, data)
-        for bet in bets:
+        for bet in markets:
             bet_type = bet_type_dict[bet['betTypeId']]
-            order = [0, 1] if bet_type == "total" else [1, 0]
-            market_data = jmespath.search(market_exp, bet)
-            for market in market_data:
-                line = market['runners']
-                # over/under and spread can swap home and away values
-                # if bet['betTypeId'] == 704 or bet['betTypeId'] == 795:
-                #    away, home = line[order[0]], line[order[1]]
-                # else:
-                home, away = line[order[0]], line[order[1]]
-                home_odds = rnd_dec(home['currentPrice'], dec) + 1
-                away_odds = rnd_dec(away['currentPrice'], dec) + 1
-                spov, spun = str(home['handicap']), str(away['handicap'])
-                if bet_type == 'spread':
-                    if spov[0] == '-':
-                        spun = f"+{spun}"
-                    elif spun[0] == '-':
-                        spov = f"+{spov}"
-                elif bet_type == 'moneyline':
-                    spov = spun = ''
-
-                lines.append({
-                    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-                    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-                    'home_odds':home_odds, 'away_odds':away_odds
-                })
-
+            market_values['bet_type'] = bet_type
+            market_values['order'] = [0, 1] if bet_type == "total" else [1, 0]
+            market_data = bet['betTypes'][0]['events']
+            for parsed_lines in parse_lines(market_data, market_values):
+                lines.append(parsed_lines)
     return lines
 
-def valid_game_name(game_name):
-    # game name cannot exceed 7 words
-    words = game_name.split(' ')
-    return len(words) <= 7
 
 def clean_matchup(matchup):
     unusual_team_name = {
@@ -160,3 +121,43 @@ def clean_matchup(matchup):
     for word in to_replace:
         matchup = matchup.replace(word, '')
     return matchup
+
+
+def parse_markets(data, bet_type_dict):
+    markets = []
+    for market in data['gameData']['betTypeGroups']:
+        if market['betTypeId'] in bet_type_dict:
+            markets.append(market)
+    return markets
+
+
+def parse_lines(market_data, market_values):
+    sportsbook = "Sports Interaction"
+    period = 0
+    dec = 3
+    matchup, date, bet_type, order = market_values.values()
+    for market in market_data:
+        if market['live'] == False:  # Market is locked
+            continue
+        line = market['runners']
+        # over/under and spread can swap home and away values
+        # if bet['betTypeId'] == 704 or bet['betTypeId'] == 795:
+        #    away, home = line[order[0]], line[order[1]]
+        # else:
+        home, away = line[order[0]], line[order[1]]
+        home_odds = rnd_dec(home['currentPrice'], dec) + 1
+        away_odds = rnd_dec(away['currentPrice'], dec) + 1
+        spov, spun = str(home['handicap']), str(away['handicap'])
+        if bet_type == 'spread':
+            if spov[0] == '-':
+                spun = f"+{spun}"
+            elif spun[0] == '-':
+                spov = f"+{spov}"
+        elif bet_type == 'moneyline':
+            spov = spun = ''
+
+        yield ({
+            'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+            'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+            'home_odds':home_odds, 'away_odds':away_odds
+        })
