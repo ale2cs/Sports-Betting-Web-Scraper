@@ -47,7 +47,7 @@ async def get_bodog():
                 for market in group:
                     bet_type = bet_type_dict[market['description']]
                     outcomes = market['outcomes']
-                    if ((len(outcomes) % 2) != 0):  # quick fix
+                    if ((len(outcomes) % 2) != 0):  # Only two outcome markets
                         outcomes.pop(0)
                     for i, value in enumerate(outcomes):
                         if i % 2 != 0:

@@ -118,10 +118,10 @@ def parse_market_data(market_data, market_values):
                 spov = f'+{spov}'
         else:
             spov = spun = ''
-        yield ((
+        yield ([
             sport, league, matchup, bet_type, period, date, home_team, 
             away_team, spov, spun
-        ),
+        ],
         ({
             'matchup':matchup, 'bet_type':bet_type, 'period':period, 
             'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 

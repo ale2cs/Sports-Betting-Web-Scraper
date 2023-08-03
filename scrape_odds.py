@@ -126,8 +126,20 @@ def add_markets(conn, markets):
     cur = conn.cursor()
     insert = """
         INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ON CONFLICT DO NOTHING
+        SELECT sport, league, name, type, period, date, home_team, away_team, spov, spun
+        FROM (
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ) AS M1 (sport, league, name, type, period, date, home_team, away_team, spov, spun)
+        WHERE NOT EXISTS (
+            SELECT 1
+            FROM markets M2
+            WHERE M1.name = M2.name
+            AND M1.type = M2.type
+            AND M1.period = M2.period
+            AND M1.date = M2.date
+            AND M1.spov = M2.spov
+            AND M1.spun = M2.spun
+        )
     """
     cur.executemany(insert, markets)
     conn.commit()
