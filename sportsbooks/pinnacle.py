@@ -1,7 +1,6 @@
 import asyncio
 import httpx
 from utils.calcs import american_to_decimal
-from utils.helpers import flatten
 
 async def get_pinacle():
     markets = []
@@ -10,21 +9,12 @@ async def get_pinacle():
     games, values = await get_data()
 
     for sport, prices in zip(games, values):
-        for game_id, league, teams, time in parse_games(sport):
-            market_values = {} 
-            home_team, away_team = teams[0]['name'], teams[1]['name']
-            market_values['league'] = league['name']
-            market_values['sport'] = league['sport']['name']
-            market_values['home_team'] = home_team
-            market_values['away_team'] = away_team
-            market_values['matchup'] = f"{away_team} @ {home_team}"
-            market_values['date'] = time['cutoffAt']
-            market_values['period'] = time['period']
-            market_data = parse_markets(prices, game_id, bet_type_dict)
-            parsed_markets, parsed_lines = parse_market_data(market_data, market_values)
-            markets.append(parsed_markets)
-            lines.append(parsed_lines)
-    return flatten(markets), flatten(lines)
+        for market_values in parse_market_values(sport):
+            market_data = parse_markets(prices, market_values['game_id'], bet_type_dict)
+            for parsed_markets, parsed_lines in parse_market_data(market_data, market_values):
+                markets.append(parsed_markets)
+                lines.append(parsed_lines)
+    return markets, lines
 
 
 async def get_data():
@@ -56,6 +46,21 @@ async def make_request(client, url):
     return resp.json()
 
 
+def parse_market_values(sport): 
+    for game_id, league, teams, time in parse_games(sport):
+        market_values = {} 
+        home_team, away_team = teams[0]['name'], teams[1]['name']
+        market_values['game_id'] = game_id
+        market_values['league'] = league['name']
+        market_values['sport'] = league['sport']['name']
+        market_values['home_team'] = home_team
+        market_values['away_team'] = away_team
+        market_values['matchup'] = f"{away_team} @ {home_team}"
+        market_values['date'] = time['cutoffAt']
+        market_values['period'] = time['period']
+        yield market_values
+
+
 def parse_games(sport):
     bets = []
     for line in sport:
@@ -64,7 +69,6 @@ def parse_games(sport):
             line['parent'] != None and
             periods['cutoffAt'] != None):
                 bets.append([line['parentId'], line['league'], line['parent']['participants'], periods]) 
-    # Loop may not be necessary
     if not bets:
         for line in sport:
             periods = line['periods'][0]
@@ -97,10 +101,8 @@ def parse_markets(prices, game_id, bet_type_dict):
 
 
 def parse_market_data(market_data, market_values):
-    markets = []
-    lines = []
     sportsbook = 'Pinnacle'
-    league, sport, home_team, away_team, matchup, date, period = market_values.values()
+    game_id, league, sport, home_team, away_team, matchup, date, period = market_values.values()
     for data in market_data:
         bet_type = data['type']
         if len(data['prices']) != 2:  # Only markets with two outcomes
@@ -116,13 +118,14 @@ def parse_market_data(market_data, market_values):
                 spov = f'+{spov}'
         else:
             spov = spun = ''
-        markets.append((
+        yield ((
             sport, league, matchup, bet_type, period, date, home_team, 
             away_team, spov, spun
-        ))
-        lines.append({
+        ),
+        ({
             'matchup':matchup, 'bet_type':bet_type, 'period':period, 
             'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
             'home_odds':home_odds, 'away_odds':away_odds
-        })
-    return markets, lines
+        }))
+
+asyncio.run(get_pinacle())

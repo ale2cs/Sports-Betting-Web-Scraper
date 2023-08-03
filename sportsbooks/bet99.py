@@ -1,37 +1,8 @@
 import asyncio
 import httpx
-from utils.helpers import flatten, add_dec
+from utils.helpers import add_dec
 
 async def get_bet99():
-    team_dict = {
-        # NHL
-        'ANA':'Anaheim', 'ARI':'Arizona', 'BOS':'Boston', 
-        'BUF':'Buffalo', 'CAR':'Carolina', 'CBJ':'Columbus', 
-        'CGY':'Calgary', 'CHI':'Chicago', 'COL':'Colorado', 
-        'DAL':'Dallas', 'DET':'Detroit', 'EDM':'Edmonton', 
-        'FLA':'Florida', 'LA':'Los Angeles', 'MIN':'Minnesota', 
-        'MTL':'Montreal', 'NJ':'New Jersey', 'NSH':'Nashville', 
-        'NYI':'New York', 'NYR':'New York', 'OTT':'Ottawa', 
-        'PIT':'Pittsburgh', 'SEA':'Seattle', 'SJ':'San Jose', 
-        'STL':'St. Louis', 'TB':'Tampa Bay', 'TOR':'Toronto', 
-        'VAN':'Vancouver', 'VGK':'Vegas', 'WSH':'Washington', 
-        'WPG':'Winnipeg',
-            
-        # NBA
-        'ATL':'Atlanta', 'BKN':'Brooklyn', 'CHA':'Charlotte', 
-        'CLE':'Cleveland', 'DEN':'Denver', 'GS':'Golden State', 
-        'HOU':'Houston', 'IND':'Indiana', 'LAC':'Los Angeles', 
-        'LAL':'Los Angeles', 'MEM':'Memphis', 'MIA':'Miami', 
-        'MIL':'Milwaukee', 'NOP':'New Orleans', 'NY':'New York', 
-        'OKC':'Oklahoma City','ORL': 'Orlando', 'PHI':'Philadelphia', 
-        'PHX':'Phoenix', 'POR':'Portland', 'SAC':'Sacramento', 
-        'SAS':'San Antonio', 'UTA':'Utah',
-        
-        # MLB
-        'BAL':'Baltimore', 'CIN':"Cincinnati", 'KC':'Kansas',
-        'OAK':'Oakland', 'SD':'San Diego', 'SF':'San Francisco',
-        'TEX':'Texas', 'WAS':'Washington',
-    }
     bet_type_dict = {
         'Money Line': 'moneyline', 
         'Total':'total', 'Spread':'spread', 
@@ -39,9 +10,9 @@ async def get_bet99():
         'Total (AL)':'total', 
         'Spread (AL)':'spread',
     }
-    lines = []
-    
+    lines = [] 
     responses = await get_data()
+
     for resp in responses:
         if not resp['Result']['Items']:
             continue
@@ -51,16 +22,11 @@ async def get_bet99():
 
         for bets, event in zip(game_bets, events):
             values = {}
-            matchup = event['Name']
             values['date'] = event['EventDate']
-            home_team, away_team = matchup.split(' vs. ')
-            home_abbr = home_team.split(' ')[0] 
-            away_abbr = away_team.split(' ')[0] 
-            home_team = home_team.replace(home_abbr, team_dict[home_abbr])
-            away_team = away_team.replace(away_abbr, team_dict[away_abbr])
-            values['matchup'] = f'{away_team} @ {home_team}'
-            lines.append(format_lines(bets, values, bet_type_dict))
-    return flatten(lines)
+            values['matchup'] = parse_matchup(event)
+            for formatted_lines in format_lines(bets, values, bet_type_dict):
+                lines.append(formatted_lines)
+    return lines
 
 
 async def get_data():
@@ -103,8 +69,46 @@ def parse_markets(data, bet_type_dict):
     return markets
 
 
+def parse_matchup(event):
+    team_dict = {
+        # NHL
+        'ANA':'Anaheim', 'ARI':'Arizona', 'BOS':'Boston', 
+        'BUF':'Buffalo', 'CAR':'Carolina', 'CBJ':'Columbus', 
+        'CGY':'Calgary', 'CHI':'Chicago', 'COL':'Colorado', 
+        'DAL':'Dallas', 'DET':'Detroit', 'EDM':'Edmonton', 
+        'FLA':'Florida', 'LA':'Los Angeles', 'MIN':'Minnesota', 
+        'MTL':'Montreal', 'NJ':'New Jersey', 'NSH':'Nashville', 
+        'NYI':'New York', 'NYR':'New York', 'OTT':'Ottawa', 
+        'PIT':'Pittsburgh', 'SEA':'Seattle', 'SJ':'San Jose', 
+        'STL':'St. Louis', 'TB':'Tampa Bay', 'TOR':'Toronto', 
+        'VAN':'Vancouver', 'VGK':'Vegas', 'WSH':'Washington', 
+        'WPG':'Winnipeg',
+            
+        # NBA
+        'ATL':'Atlanta', 'BKN':'Brooklyn', 'CHA':'Charlotte', 
+        'CLE':'Cleveland', 'DEN':'Denver', 'GS':'Golden State', 
+        'HOU':'Houston', 'IND':'Indiana', 'LAC':'Los Angeles', 
+        'LAL':'Los Angeles', 'MEM':'Memphis', 'MIA':'Miami', 
+        'MIL':'Milwaukee', 'NOP':'New Orleans', 'NY':'New York', 
+        'OKC':'Oklahoma City','ORL': 'Orlando', 'PHI':'Philadelphia', 
+        'PHX':'Phoenix', 'POR':'Portland', 'SAC':'Sacramento', 
+        'SAS':'San Antonio', 'UTA':'Utah',
+        
+        # MLB
+        'BAL':'Baltimore', 'CIN':"Cincinnati", 'KC':'Kansas',
+        'OAK':'Oakland', 'SD':'San Diego', 'SF':'San Francisco',
+        'TEX':'Texas', 'WAS':'Washington',
+    }
+    matchup = event['Name']
+    home_team, away_team = matchup.split(' vs. ')
+    home_abbr = home_team.split(' ')[0] 
+    away_abbr = away_team.split(' ')[0] 
+    home_team = home_team.replace(home_abbr, team_dict[home_abbr])
+    away_team = away_team.replace(away_abbr, team_dict[away_abbr])
+    return f'{away_team} @ {home_team}'
+
+
 def format_lines(bets, values, bet_type_dict):
-    lines = []
     date, matchup = values.values()
     sportsbook = 'Bet99'
     period = 0  
@@ -121,9 +125,8 @@ def format_lines(bets, values, bet_type_dict):
             spov = f"{spov[0]}{add_dec(spov[1:])}"
         else:
             spov, spun = add_dec(spov), add_dec(spun)
-        lines.append({
+        yield ({
             'matchup':matchup, 'bet_type':bet_type, 'period':period, 
             'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
             'home_odds':home_odds, 'away_odds':away_odds
         })
-    return lines
