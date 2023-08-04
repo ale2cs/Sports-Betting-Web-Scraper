@@ -1,6 +1,5 @@
 import asyncio
 import httpx
-import jmespath
 from utils.dates import epoch_to_iso
 
 async def get_bodog():
@@ -15,71 +14,23 @@ async def get_bodog():
         "Total Runs O/U":"total",
         "Total Goals O/U":"total",
     }
-
     lines = []
-    sportsbook = "Bodog"
-    period = 0
-
-    bet_type_keys = [f"'{key}'" for key in bet_type_dict]
-    bet_type_query = f"[{', '.join(bet_type_keys)}]"
-    des_bets_exp = f"displayGroups[*].markets[?contains({bet_type_query}, description) && (period.description == 'Game' || period.description == 'Regulation Time')]"
-
     responses = await get_data()
+
     for data in responses: 
         if not data:
             continue
         events = data[0]['events']
 
-        reverse = False
         for event in events:
-            matchup = event['description']
-            if '@' in matchup:
-                away_team, home_team = matchup.split(' @ ')
-            elif 'vs' in matchup:
-                home_team, away_team = matchup.split(' vs ')
-                matchup = f"{away_team} @ {home_team}"
-                reverse = True
-            else:
-                continue
-            date = epoch_to_iso(event['startTime'] / 1000)
-            des_bets = jmespath.search(des_bets_exp, event)
-            for group in des_bets:
-                for market in group:
-                    bet_type = bet_type_dict[market['description']]
-                    outcomes = market['outcomes']
-                    if ((len(outcomes) % 2) != 0):  # Only two outcome markets
-                        outcomes.pop(0)
-                    for i, value in enumerate(outcomes):
-                        if i % 2 != 0:
-                            continue 
-                        away, home = outcomes[i], outcomes[i+1]
-                        away, home = away['price'], home['price'] 
-                        if bet_type != 'total' and not reverse:
-                            home_odds, away_odds = home['decimal'], away['decimal']
-                        else:
-                            away_odds, home_odds = home['decimal'], away['decimal']
-
-                        if bet_type != 'moneyline':
-                            if 'handicap2' in home:
-                                spov = str((float(home['handicap']) + float(home['handicap2'])) / 2)
-                                spun = str((float(away['handicap']) + float(away['handicap2'])) / 2)
-                            else:
-                                spov, spun = home['handicap'], away['handicap']
-                        else:
-                            spov = spun = ''
-                        
-                        if bet_type == 'spread':
-                            if spov[0] == '-':
-                                spun = f"+{spun}"
-                            elif spun[0] == '-':
-                                spov = f"+{spov}"
-
-                        lines.append({
-                            'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-                            'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-                            'home_odds':home_odds, 'away_odds':away_odds
-                        })
+            market_values = {}
+            market_values['matchup'] = event['description']
+            market_values['date'] = epoch_to_iso(event['startTime'] / 1000)
+            parsed_markets = parse_markets(event, bet_type_dict)
+            for line in parse_lines(parsed_markets, market_values, bet_type_dict):
+                lines.append(line)
     return lines
+
 
 async def get_data():
     leagues = (
@@ -94,7 +45,7 @@ async def get_data():
         tasks = []
         for league in leagues:
             url = f"https://www.bodog.eu/services/sports/event/coupon/events/A/description/{league}"
-            resp = tasks.append(asyncio.ensure_future(make_request(client, url)))
+            tasks.append(asyncio.ensure_future(make_request(client, url)))
         responses = await asyncio.gather(*tasks) 
     return responses
 
@@ -110,3 +61,64 @@ async def make_request(client, url):
     query = {"preMatchOnly":"true"}
     resp = await client.get(url, headers=headers, params=query, timeout=15)
     return resp.json()
+
+
+def parse_markets(event, bet_type_dict):
+    parsed_markets = []
+    groups = event['displayGroups']
+    for group in groups:
+        for market in group['markets']:
+            description = market['period']['description']
+            if (market['description'] in bet_type_dict 
+                and market['status'] == 'O'
+                and (description == 'Game' or description == 'Regulation Time')):
+                parsed_markets.append(market)
+    return parsed_markets
+
+
+def parse_lines(parsed_markets, market_values, bet_type_dict):
+    sportsbook = "Bodog"
+    period = 0
+    matchup, date =  market_values.values()
+    for market in parsed_markets:
+        bet_type = bet_type_dict[market['description']]
+        outcomes = market['outcomes']
+        if (len(outcomes) % 2) != 0:  # Only two outcome markets
+            outcomes.pop(0)
+        for i in range(len(outcomes)):
+            if i % 2 != 0:
+                continue 
+            away, home = outcomes[i], outcomes[i+1]
+            away, home = away['price'], home['price'] 
+    
+            if bet_type != 'total':
+                home_odds, away_odds = home['decimal'], away['decimal']
+            else:
+                away_odds, home_odds = home['decimal'], away['decimal']
+
+            spov, spun = clean_spreads(bet_type, home, away)
+
+            yield ({
+                'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+                'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+                'home_odds':home_odds, 'away_odds':away_odds
+            })
+
+
+def clean_spreads(bet_type, home, away):
+    if bet_type != 'moneyline':
+        if 'handicap2' in home:
+            spov = str((float(home['handicap']) + float(home['handicap2'])) / 2)
+            spun = str((float(away['handicap']) + float(away['handicap2'])) / 2)
+        else:
+            spov, spun = home['handicap'], away['handicap']
+    else:
+        spov = spun = ''
+    
+    if bet_type == 'spread':
+        if spov[0] == '-':
+            spun = f'+{spun}'
+        elif spun[0] == '-':
+            spov = f'+{spov}'
+    return spov, spun
+

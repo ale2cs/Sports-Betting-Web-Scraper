@@ -124,6 +124,7 @@ def create_tables(conn):
 
 def add_markets(conn, markets):
     cur = conn.cursor()
+    # https://stackoverflow.com/questions/63720340/postgres-prevent-serial-incrementation-with-on-conflict-do-nothing?noredirect=1&lq=1
     insert = """
         INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
         SELECT sport, league, name, type, period, date, home_team, away_team, spov, spun
