@@ -40,8 +40,8 @@ async def main():
         add_lines(conn, bet99)
         bodog = await get_bodog()
         add_lines(conn, bodog)
-        # eights_sport = await get_888sport()
-        # add_lines(conn, eights_sport)
+        eights_sport = await get_888sport()
+        add_lines(conn, eights_sport)
         sports_interaction = get_sports_interaction()
         add_lines(conn, sports_interaction)
 
