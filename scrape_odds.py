@@ -176,7 +176,7 @@ def add_lines(conn, lines):
         ),
         updated_row AS (
             UPDATE lines L1
-            SET updated_at = TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
             FROM recent_line AS L2
             WHERE L1.line_id = L2.line_id
             AND L1.home_odds = %(home_odds)s
@@ -184,7 +184,9 @@ def add_lines(conn, lines):
             RETURNING *
         )
         INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
-        SELECT M.market_id, %(sportsbook)s, %(home_odds)s, %(away_odds)s, TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), TO_CHAR(NOW(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        SELECT M.market_id, %(sportsbook)s, %(home_odds)s, %(away_odds)s, 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
         FROM market M
         WHERE NOT EXISTS (
             SELECT 1
