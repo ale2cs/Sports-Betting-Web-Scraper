@@ -41,6 +41,9 @@ async def get_data():
         {"sportids":"70", "champids":"3232"},  # NHL
         {"sportids":"67", "champids":"2980"},  # NBA
         {"sportids":"76", "champids":"3286"},  # MLB
+        {"sportsid":"66", "champids":"4610"},  # MLS
+        {"sportids":"67", "champids":"5519"},  # WNBA
+        {"sportids":"76", "champids":"4457"},  # NPB
     ]
     async with httpx.AsyncClient() as client:
         tasks = []
@@ -103,8 +106,10 @@ def parse_matchup(event):
     home_team, away_team = matchup.split(' vs. ')
     home_abbr = home_team.split(' ')[0] 
     away_abbr = away_team.split(' ')[0] 
-    home_team = home_team.replace(home_abbr, team_dict[home_abbr])
-    away_team = away_team.replace(away_abbr, team_dict[away_abbr])
+    if home_abbr in team_dict:
+        home_team = home_team.replace(home_abbr, team_dict[home_abbr])
+    if away_abbr in team_dict:
+        away_team = away_team.replace(away_abbr, team_dict[away_abbr])
     return f'{away_team} @ {home_team}'
 
 

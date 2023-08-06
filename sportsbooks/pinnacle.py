@@ -22,8 +22,10 @@ async def get_data():
         1456,  # NHL
         487,  # NBA
         246,  # MLB
-        #2663,  # MLS
-        #187703,  # NPB
+        578,  # WNBA
+        2663,  # MLS
+        2687,  # FIFA Womens
+        187703,  # NPB
     ] 
     async with httpx.AsyncClient() as client: 
         game_tasks = []
@@ -47,11 +49,19 @@ async def make_request(client, url):
 
 
 def parse_market_values(sport): 
+    acronym = {
+        'Nippon Professional Baseball':'NPB'
+    }
     for game_id, league, teams, time in parse_games(sport):
         market_values = {} 
         home_team, away_team = teams[0]['name'], teams[1]['name']
         market_values['game_id'] = game_id
-        market_values['league'] = league['name']
+        league_name = league['name']
+
+        if league_name in acronym:
+            league_name = acronym[league_name]
+
+        market_values['league'] = league_name
         market_values['sport'] = league['sport']['name']
         market_values['home_team'] = home_team
         market_values['away_team'] = away_team

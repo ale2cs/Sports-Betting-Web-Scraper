@@ -61,6 +61,8 @@ def parse_lines(des_lines, markets, market_values, bet_type_dict):
     matchup, date = market_values.values()
 
     for line_id in des_lines:
+        if line_id not in markets:
+            continue
         market = markets[line_id]
         if 'options' in market:
             options = market['options']

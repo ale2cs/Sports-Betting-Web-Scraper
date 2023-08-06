@@ -23,12 +23,14 @@ def get_sports_interaction():
         "https://www.sportsinteraction.com/baseball/mlb-betting-lines/",
         "https://www.sportsinteraction.com/baseball/national-league-betting-lines/",
         # "https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
-        # "https://www.sportsinteraction.com/basketball/wnba-betting-lines/"
+        "https://www.sportsinteraction.com/basketball/wnba-betting-lines/",
+        # "https://www.sportsinteraction.com/baseball/japanese-betting-lines/"
     ]
 
     game_urls = scrape_game_urls(sport_urls)
     game_data = scrape_game_data(game_urls) 
-    return scrape_lines(game_data, bet_type_dict)
+    lines = scrape_lines(game_data, bet_type_dict)
+    return lines
 
 
 def scrape_game_urls(sport_urls):

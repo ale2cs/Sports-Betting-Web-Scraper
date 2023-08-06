@@ -24,7 +24,10 @@ async def get_bodog():
 
         for event in events:
             market_values = {}
-            market_values['matchup'] = event['description']
+            matchup = event['description']
+            reverse, cleaned_matchup = clean_matchup(matchup)
+            market_values['reverse'] = reverse
+            market_values['matchup'] = cleaned_matchup
             market_values['date'] = epoch_to_iso(event['startTime'] / 1000)
             parsed_markets = parse_markets(event, bet_type_dict)
             for line in parse_lines(parsed_markets, market_values, bet_type_dict):
@@ -37,9 +40,10 @@ async def get_data():
         'hockey/nhl', 
         'basketball/nba', 
         'baseball/mlb', 
-        #'soccer/north-america/united-states/mls',
-        #'baseball/japan/professional-baseball',
-        #'basketball/wnba',
+        'soccer/north-america/united-states/mls',
+        'baseball/japan/professional-baseball',
+        'basketball/wnba',
+        'soccer/fifa-womens-world-cup/women-s-world-cup-matches',
     )
     async with httpx.AsyncClient() as client: 
         tasks = []
@@ -48,6 +52,16 @@ async def get_data():
             tasks.append(asyncio.ensure_future(make_request(client, url)))
         responses = await asyncio.gather(*tasks) 
     return responses
+
+
+def clean_matchup(matchup):
+    reverse = False
+    if 'vs' in matchup:
+        no_w = matchup.replace(' (W)', '')
+        home_team, away_team = no_w.split( 'vs' )
+        matchup = f'{away_team} @ {home_team}'
+        reverse = True 
+    return reverse, matchup
 
 
 async def make_request(client, url):
@@ -79,7 +93,7 @@ def parse_markets(event, bet_type_dict):
 def parse_lines(parsed_markets, market_values, bet_type_dict):
     sportsbook = "Bodog"
     period = 0
-    matchup, date =  market_values.values()
+    reversed, matchup, date =  market_values.values()
     for market in parsed_markets:
         bet_type = bet_type_dict[market['description']]
         outcomes = market['outcomes']
@@ -90,13 +104,8 @@ def parse_lines(parsed_markets, market_values, bet_type_dict):
                 continue 
             away, home = outcomes[i], outcomes[i+1]
             away, home = away['price'], home['price'] 
-    
-            if bet_type != 'total':
-                home_odds, away_odds = home['decimal'], away['decimal']
-            else:
-                away_odds, home_odds = home['decimal'], away['decimal']
-
-            spov, spun = clean_spreads(bet_type, home, away)
+            home_odds, away_odds = clean_totals(bet_type, home, away, reversed)
+            spov, spun = clean_spreads(bet_type, home, away, reversed)
 
             yield ({
                 'matchup':matchup, 'bet_type':bet_type, 'period':period, 
@@ -105,8 +114,18 @@ def parse_lines(parsed_markets, market_values, bet_type_dict):
             })
 
 
-def clean_spreads(bet_type, home, away):
+def clean_totals(bet_type, home, away, reversed):
+    home_odds, away_odds = home['decimal'], away['decimal']    
+    if bet_type == 'total' or (bet_type == 'spread' and reversed):
+        away_odds, home_odds = home['decimal'], away['decimal']
+    return home_odds, away_odds
+
+
+def clean_spreads(bet_type, home, away, reversed):
     if bet_type != 'moneyline':
+        if bet_type == 'spread' and reversed:
+            home, away, = away, home
+
         if 'handicap2' in home:
             spov = str((float(home['handicap']) + float(home['handicap2'])) / 2)
             spun = str((float(away['handicap']) + float(away['handicap2'])) / 2)
