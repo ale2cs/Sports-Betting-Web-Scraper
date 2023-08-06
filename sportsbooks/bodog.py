@@ -14,6 +14,11 @@ async def get_bodog():
         "Total Runs O/U":"total",
         "Total Goals O/U":"total",
     }
+    period_dict = {
+        'G':0,
+        'RT':0,
+        # '1H':1,
+    }
     lines = []
     responses = await get_data()
 
@@ -29,8 +34,8 @@ async def get_bodog():
             market_values['reverse'] = reverse
             market_values['matchup'] = cleaned_matchup
             market_values['date'] = epoch_to_iso(event['startTime'] / 1000)
-            parsed_markets = parse_markets(event, bet_type_dict)
-            for line in parse_lines(parsed_markets, market_values, bet_type_dict):
+            parsed_markets = parse_markets(event, bet_type_dict, period_dict)
+            for line in parse_lines(parsed_markets, market_values, bet_type_dict, period_dict):
                 lines.append(line)
     return lines
 
@@ -54,16 +59,6 @@ async def get_data():
     return responses
 
 
-def clean_matchup(matchup):
-    reverse = False
-    if 'vs' in matchup:
-        no_w = matchup.replace(' (W)', '')
-        home_team, away_team = no_w.split( 'vs' )
-        matchup = f'{away_team} @ {home_team}'
-        reverse = True 
-    return reverse, matchup
-
-
 async def make_request(client, url):
     headers = {
         "cookie": "TS014505a4=014b5d5d074621dcb805603f6ecd400ce1005af41531ed96e612911b0ac1d43907fae8b6e0d8487c332e76c9c3ce7978a0e89cfbdf",
@@ -77,25 +72,34 @@ async def make_request(client, url):
     return resp.json()
 
 
-def parse_markets(event, bet_type_dict):
+def clean_matchup(matchup):
+    reverse = False
+    if 'vs' in matchup:
+        no_w = matchup.replace(' (W)', '')
+        home_team, away_team = no_w.split( 'vs' )
+        matchup = f'{away_team} @ {home_team}'
+        reverse = True 
+    return reverse, matchup
+
+
+def parse_markets(event, bet_type_dict, period_dict):
     parsed_markets = []
     groups = event['displayGroups']
     for group in groups:
         for market in group['markets']:
-            description = market['period']['description']
             if (market['description'] in bet_type_dict 
                 and market['status'] == 'O'
-                and (description == 'Game' or description == 'Regulation Time')):
+                and (market['period']['abbreviation'] in period_dict)):
                 parsed_markets.append(market)
     return parsed_markets
 
 
-def parse_lines(parsed_markets, market_values, bet_type_dict):
+def parse_lines(parsed_markets, market_values, bet_type_dict, period_dict):
     sportsbook = "Bodog"
-    period = 0
     reversed, matchup, date =  market_values.values()
     for market in parsed_markets:
         bet_type = bet_type_dict[market['description']]
+        period = period_dict[market['period']['abbreviation']]
         outcomes = market['outcomes']
         if (len(outcomes) % 2) != 0:  # Only two outcome markets
             outcomes.pop(0)

@@ -67,7 +67,6 @@ def parse_market_values(sport):
         market_values['away_team'] = away_team
         market_values['matchup'] = f"{away_team} @ {home_team}"
         market_values['date'] = time['cutoffAt']
-        market_values['period'] = time['period']
         yield market_values
 
 
@@ -75,16 +74,12 @@ def parse_games(sport):
     bets = []
     for line in sport:
         periods = line['periods'][0]
-        if (periods['period'] == 0 and
-            line['parent'] != None and
-            periods['cutoffAt'] != None):
-                bets.append([line['parentId'], line['league'], line['parent']['participants'], periods]) 
+        if (line['parent'] != None and periods['period'] and periods['cutoffAt'] != None):
+            bets.append([line['parentId'], line['league'], line['parent']['participants'], periods]) 
     if not bets:
         for line in sport:
             periods = line['periods'][0]
-            if (periods['period'] == 0 and
-                periods['cutoffAt'] != None and
-                line['participants'][0]['alignment'] != 'neutral'):
+            if (periods['cutoffAt'] != None and line['participants'][0]['alignment'] != 'neutral'):
                 bets.append([line['id'], line['league'], line['participants'], periods])
     return remove_duplicate_games(bets)
 
@@ -103,17 +98,18 @@ def remove_duplicate_games(games):
 def parse_markets(prices, game_id, bet_type_dict):
     markets = []
     for price in prices:
-        if (price['matchupId'] == game_id and 
-            price['period'] == 0 and  # Only full game markets
-            price['type'] in bet_type_dict):
+        if (price['matchupId'] == game_id 
+            and price['period'] == 0
+            and price['type'] in bet_type_dict):
             markets.append(price)
     return markets 
 
 
 def parse_market_data(market_data, market_values):
     sportsbook = 'Pinnacle'
-    game_id, league, sport, home_team, away_team, matchup, date, period = market_values.values()
+    game_id, league, sport, home_team, away_team, matchup, date = market_values.values()
     for data in market_data:
+        period = data['period']
         bet_type = data['type']
         if len(data['prices']) != 2:  # Only markets with two outcomes
             continue
