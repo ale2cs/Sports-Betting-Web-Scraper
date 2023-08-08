@@ -1,6 +1,6 @@
 export default function KellyCriterion() {
     return (
-        <main className={styles.main}>
+        <main>
             <div>
                 <h1>This is the kelly criterion calcualtor page!</h1>
             </div>

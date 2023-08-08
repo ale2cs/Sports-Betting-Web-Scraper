@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { vig, noVigOdds, impliedProbability } from "@/utils/calculator-utils";
+import { vig, noVigOdds, impliedProbability } from "utils/calculator-utils";
+import styles from "styles/margin.module.css";
 
 export default function NoVig() {
   const [odds1, setOdds1] = useState(0);
@@ -37,85 +38,90 @@ export default function NoVig() {
   }, [odds1, odds2]);
 
   return (
-    <main className="main-container">
-      <div class="calc-intro-box">
-        <h2 class="calc-head">Margin Calculator</h2>
+    <main className={styles["main-container"]}>
+      <div className={styles["calc-intro-box"]}>
+        <h2 className={styles["calc-head"]}>Margin Calculator</h2>
         <p>
           The Margin Calculator will convert Odds into Probability and tell you
           how much your bookmaker is charging you.
         </p>
       </div>
-      <div class="calculator">
+      <div className={styles.calculator}>
         <form>
           <ul>
             <li>
-              <div class="calc-info">
-                <span class="info-span">Odds</span>
-                <span class="info-span">Bookmaker</span>
-                <span class="info-span">Fair</span>
-                <span class="info-span">Fair Odds</span>
+              <div className={styles["calc-info"]}>
+                <span className={styles["info-span"]}>Odds</span>
+                <span className={styles["info-span"]}>Bookmaker</span>
+                <span className={styles["info-span"]}>Fair</span>
+                <span className={styles["info-span"]}>Fair Odds</span>
               </div>
             </li>
             <li>
-              <label class="calc-label">Option 1</label>
+              <label className={styles["calc-label"]}>Option 1</label>
               <input
+                className={styles.odds1}
                 name="odds1"
-                class="odds1"
                 placeholder="Enter odds"
                 type="string"
                 id="odds1"
                 onChange={(event) => changeOdds1(event)}
               ></input>
-              <div class="calc-outputs">
-                <span class="output-span">{bookmakerProbability1}%</span>
-                <span class="output-span">{fairProbability1}%</span>
-                <span class="output-span">{fairOdds1}</span>
+              <div className={styles["calc-outputs"]}>
+                <span className={styles["output-span"]}>
+                  {bookmakerProbability1}%
+                </span>
+                <span className={styles["output-span"]}>
+                  {fairProbability1}%
+                </span>
+                <span className={styles["output-span"]}>{fairOdds1}</span>
               </div>
             </li>
             <li>
-              <label class="calc-label">Option 2</label>
+              <label className={styles["calc-label"]}>Option 2</label>
               <input
+                className={styles.odds2}
                 name="odds2"
-                class="odds2"
                 placeholder="Enter odds"
                 type="string"
                 id="odds2"
                 onChange={(event) => changeOdds2(event)}
               ></input>
-              <span class="output-span">{bookmakerProbability2}%</span>
-              <span class="output-span">{fairProbability2}%</span>
-              <span class="output-span">{fairOdds2}</span>
+              <span className={styles["output-span"]}>
+                {bookmakerProbability2}%
+              </span>
+              <span className={styles["output-span"]}>{fairProbability2}%</span>
+              <span className={styles["output-span"]}>{fairOdds2}</span>
             </li>
           </ul>
         </form>
-        <div class="totals">
-          <div class="row">
-            <label class="calc-label">Margin</label>
-            <span class="margin">{margin.toFixed(2)}%</span>
+        <div className={styles.totals}>
+          <div className={styles.row}>
+            <label className={styles["calc-label"]}>Margin</label>
+            <span className={styles.margin}>{margin.toFixed(2)}%</span>
           </div>
         </div>
-        <div class="calc-footer">
+        <div className={styles["calc-footer"]}>
           <p>
-            <br/>
-            A bookmaker's margin is essentially what they charge you for 
-            placing a bet. Sharp bettors will be aware of what a margin is and 
-            how to work it out but for those that don't, our Margin Calculator 
+            <br />A bookmaker's margin is essentially what they charge you for
+            placing a bet. Sharp bettors will be aware of what a margin is and
+            how to work it out but for those that don't, our Margin Calculator
             will do the work for you.
           </p>
           <p>
-            <br/>
-            Bookmakers make profit by inflating the implied probability of an 
-            outcome, which decreases the odds you receive. The margin, which 
-            will vary depending on the bookmaker, is the difference between 
-            real probability and the odds offered by the bookmaker.
+            <br />
+            Bookmakers make profit by inflating the implied probability of an
+            outcome, which decreases the odds you receive. The margin, which
+            will vary depending on the bookmaker, is the difference between real
+            probability and the odds offered by the bookmaker.
           </p>
           <p>
-            <br/>
-            If you don't know how to work out a bookmaker's margin, using 
-            Pinnacle's Margin Calculator is the easiest way to calculate the 
-            probability and margin for any two-way or three-way bet. Compare 
-            our margins to other bookmakers and understand why serious bettors 
-            bet with Pinnacle.
+            <br />
+            If you don't know how to work out a bookmaker's margin, using
+            Pinnacle's Margin Calculator is the easiest way to calculate the
+            probability and margin for any two-way or three-way bet. Compare our
+            margins to other bookmakers and understand why serious bettors bet
+            with Pinnacle.
           </p>
         </div>
       </div>

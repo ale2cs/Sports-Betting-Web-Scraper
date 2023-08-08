@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { americanToDecimal, americanToFractional, decimalToAmerican,
          decimalToFractional, fractionalToAmerican, fractionalToDecimal,
-} from '/app/utils/calculator-utils';
+} from 'utils/calculator-utils';
 
 export default function OddsConverter() {
     const [american, setAmerican] = useState(110);
@@ -27,7 +27,7 @@ export default function OddsConverter() {
         setFractional(event.target.value);
     }
     return (
-         <main className={styles.main}>
+         <main>
             <div>
                 <h1>This is the odds-converter calculator page!</h1>
                 <h2>American</h2>
