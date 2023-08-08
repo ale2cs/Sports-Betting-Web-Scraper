@@ -204,7 +204,7 @@ def positive_ev(conn):
             	SELECT Max(line_id) AS line_id
             	FROM lines
                 WHERE ABS(EXTRACT(EPOCH FROM AGE(
-                    TO_TIMESTAMP(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), NOW()
+                    TO_TIMESTAMP(updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), NOW() AT TIME ZONE 'UTC'
                 ))) / 60 < 2
             	GROUP BY market_id, sportsbook
 			) AS L1
@@ -221,7 +221,7 @@ def positive_ev(conn):
         AND L1.sportsbook <> L2.sportsbook
         AND (L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds)
             OR L2.away_odds > ((L1.home_odds + L1.away_odds) / L1.home_odds))
-        AND TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() 
+        AND TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() AT TIME ZONE 'UTC'
     """
     cur = conn.cursor()
     cur.execute(positive_ev)

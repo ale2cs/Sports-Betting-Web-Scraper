@@ -1,6 +1,5 @@
 "use client";
 import { useState } from 'react';
-import styles from 'app/page.module.css'
 import { americanToDecimal, americanToFractional, decimalToAmerican,
          decimalToFractional, fractionalToAmerican, fractionalToDecimal,
 } from '/app/utils/calculator-utils';

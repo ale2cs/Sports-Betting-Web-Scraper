@@ -44,7 +44,7 @@ async def make_request(client, url):
     header = {
             "X-API-Key": "CmX2KcMrXuFmNg6YFbmTxE0y9CIrOi0R",
     }
-    resp = await client.get(url, headers=header, timeout=10)
+    resp = await client.get(url, headers=header, timeout=15)
     return resp.json()
 
 
@@ -65,7 +65,8 @@ def parse_market_values(sport):
         market_values['sport'] = league['sport']['name']
         market_values['home_team'] = home_team
         market_values['away_team'] = away_team
-        market_values['matchup'] = f"{away_team} @ {home_team}"
+        matchup = f'{away_team} @ {home_team}'
+        market_values['matchup'] = clean_matchup(matchup) 
         market_values['date'] = time['cutoffAt']
         yield market_values
 
@@ -93,6 +94,16 @@ def remove_duplicate_games(games):
             unique_ids.append(game_id)
             unique_games.append(item)
     return unique_games
+
+
+def clean_matchup(matchup):
+    remove = [
+        'G1',
+        'G2',
+    ] 
+    for word in remove:
+        matchup = matchup.replace(word, '')
+    return matchup
 
 
 def parse_markets(prices, game_id, bet_type_dict):

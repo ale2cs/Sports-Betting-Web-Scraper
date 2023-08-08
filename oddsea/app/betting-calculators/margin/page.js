@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import styles from "app/page.module.css";
-import { vig, noVigOdds, impliedProbability } from "app/utils/calculator-utils";
+import { vig, noVigOdds, impliedProbability } from "@/utils/calculator-utils";
 
 export default function NoVig() {
   const [odds1, setOdds1] = useState(0);

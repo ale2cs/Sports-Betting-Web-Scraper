@@ -36,7 +36,7 @@ async def make_request(client, url, type):
         "content-type": "multipart/form-data; boundary=---011000010111000001101001"
     }
     if type == 'GET':
-        resp = await client.get(url, headers=headers, timeout=10)
+        resp = await client.get(url, headers=headers, timeout=15)
     elif type == 'POST':
         resp = await client.post(url, headers=headers)
     return resp.json()
