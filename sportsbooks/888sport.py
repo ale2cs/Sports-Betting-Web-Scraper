@@ -70,15 +70,18 @@ def parse_lines(des_lines, markets, market_values, bet_type_dict):
             for option in options:
                 line = selections[option][option]
                 away, home = line
-                home_odds, away_odds = home['decimal_price'], away['decimal_price']
                 bet_type = bet_type_dict[home['market_name']]
+                if bet_type == 'total':
+                    away_odds, home_odds = home['decimal_price'], away['decimal_price']
+                else:
+                    home_odds, away_odds = home['decimal_price'], away['decimal_price']
                 spov = home['special_odds_value']
                 spun = away['special_odds_value'] 
-                if bet_type == "spread":
+                if bet_type == 'spread':
                     if spov[0] == '-':
-                        spun = f"+{spun}"
+                        spun = f'+{spun}'
                     else:
-                        spov = f"+{spov}" 
+                        spov = f'+{spov}' 
                 yield ({
                     'matchup':matchup, 'bet_type':bet_type, 'period':period, 
                     'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
