@@ -1,6 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { useTable } from "react-table";
+import {
+  useReactTable,
+  flexRender,
+  getCoreRowModel,
+} from "@tanstack/react-table";
 import * as dayjs from "dayjs";
 import * as relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
@@ -25,38 +29,39 @@ export default function ListPositiveLines() {
   const columns = React.useMemo(
     () => [
       {
-        Header: "Time From Now",
-        accessor: "date",
-        Cell: ({ cell: { value } }) => {
-          return `🕒 ${dayjs(value).fromNow()}`;
-        },
+        header: "Time",
+        accessorKey: "date",
+        cell: info => `🕒 ${dayjs(info.getValue()).fromNow()}`
       },
       {
-        Header: "Event",
-        accessor: "name",
+        header: "Event",
+        accessorKey: "name",
       },
       {
-        Header: "Bookmaker",
-        accessor: "sportsbook",
+        header: "Bookmaker",
+        accessorKey: "sportsbook",
       },
       {
-        Header: "Market",
-        accessor: "type",
+        header: "Market",
+        accessorKey: "type",
       },
       {
-        Header: "Bet",
-        accessor: "bet",
+        header: "Bet",
+        accessorKey: "bet",
       },
       {
-        Header: "Edge",
-        accessor: "ev",
+        header: "Edge",
+        accessorKey: "ev",
       },
     ],
     []
   );
 
-  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } =
-    useTable({ columns, data: postiiveLines });
+  const table = useReactTable({ 
+    columns, 
+    data: postiiveLines,
+    getCoreRowModel: getCoreRowModel(),
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -69,33 +74,28 @@ export default function ListPositiveLines() {
 
   return (
     <div>
-      <div>
-        <table {...getTableProps()}>
-          <thead>
-            {headerGroups.map((headerGroup) => (
-              <tr {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column) => (
-                  <th {...column.getHeaderProps()}>
-                    {column.render("Header")}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody {...getTableBodyProps()}>
-            {rows.map((row) => {
-              prepareRow(row);
-              return (
-                <tr {...row.getRowProps()}>
-                  {row.cells.map((cell) => (
-                    <td {...cell.getCellProps()}>{cell.render("Cell")}</td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      <table>
+        <thead>
+          {table.getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => <th key={header.id}>
+                {flexRender(header.column.columnDef.header, header.getContext())}
+              </th>)}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

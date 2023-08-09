@@ -10,12 +10,12 @@
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
+    "@tanstack/react-table": "^8.9.3",
     "dayjs": "^1.11.9",
     "eslint": "8.42.0",
     "eslint-config-next": "13.4.5",
     "next": "13.4.5",
     "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-table": "^7.8.0"
+    "react-dom": "18.2.0"
   }
 }
