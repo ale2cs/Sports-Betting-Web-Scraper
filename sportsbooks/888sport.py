@@ -40,7 +40,8 @@ async def get_cookies(base_url):
         )
         page = await context.new_page()
         await page.goto(base_url)
-        cookies_list = await page.context.cookies()
+        await page.wait_for_timeout(5000)
+        cookies_list = await context.cookies()
         valid_cookies_list = []
         for cookie in cookies_list:
             name = cookie['name']
@@ -56,7 +57,8 @@ async def make_request(client, url, cookies, method):
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0",
         "x-spectateclient-v": "2.32",
         "content-type": "multipart/form-data; boundary=---011000010111000001101001"
-    }
+
+    } 
     headers['Cookie'] = cookies
     if method == 'GET':
         resp = await client.get(url, headers=headers, timeout=15)
