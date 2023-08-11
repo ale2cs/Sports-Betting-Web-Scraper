@@ -1,7 +1,9 @@
 import asyncio
 import httpx
+from playwright.async_api import async_playwright
 
 async def get_888sport():
+    base_url = "https://www.888sport.com"
     url = "https://spectate-web.888sport.com/spectate/sportsbook-req/getTournamentMatches/baseball/united-states-of-america/major-league-baseball"
     bet_type_dict = {
         "Run Line":"spread",
@@ -10,12 +12,13 @@ async def get_888sport():
 
     }
     lines = []
+    cookies = await get_cookies(base_url)
 
     async with httpx.AsyncClient() as client:
-        data = await make_request(client, url, 'POST')
+        data = await make_request(client, url, cookies,  'POST')
         games = data['events']
 
-    responses = await get_data(games)
+    responses = await get_data(games, cookies)
     for data in responses: 
         event = data['event']['details']['event']
         markets = data['event']['markets']['markets_selections']
@@ -28,21 +31,41 @@ async def get_888sport():
     return lines
 
 
-async def make_request(client, url, type):
+async def get_cookies(base_url):
+    valid_cookies = ['888Cookie', '888TestData', 'bbsess', 'lang', 'anon_hash', 'spectate_session', 'odds_format']
+    async with async_playwright() as playwright:
+        browser = await playwright.firefox.launch()
+        context = await browser.new_context(
+            user_agent='Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0'
+        )
+        page = await context.new_page()
+        await page.goto(base_url)
+        cookies_list = await page.context.cookies()
+        valid_cookies_list = []
+        for cookie in cookies_list:
+            name = cookie['name']
+            if name in valid_cookies:
+                valid_cookies_list.append(f"{name}={cookie['value']}")
+        cookies = "; ".join(valid_cookies_list)
+        await browser.close()
+    return cookies
+
+
+async def make_request(client, url, cookies, method):
     headers = {
-        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/116.0",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0",
         "x-spectateclient-v": "2.32",
-        "Cookie": "888Cookie=lang%3Den%26OSR%3D1911954; 888TestData=%7B%22referrer%22%3A%22https%3A%2F%2Fwww.google.com%2F%22%2C%22last-referrer%22%3A%22https%3A%2F%2Fwww.google.com%2F%22%2C%22orig-lp%22%3A%22https%3A%2F%2Fwww.888sport.com%2F%22%2C%22currentvisittype%22%3A%22SEO%22%2C%22strategy%22%3A%22SeoStrategy%22%2C%22strategysource%22%3A%22currentvisit%22%2C%22publisher%22%3A%22SearchEngine%22%2C%22datecreated%22%3A%222023-08-04T16%3A10%3A56.985Z%22%2C%22expiredat%22%3A%22Fri%2C%2011%20Aug%202023%2016%3A10%3A00%20GMT%22%7D; bbsess=v8cTjCGxR3w-LXeOl7TTsZwQSwz; lang=enu; anon_hash=d3fd5ba36aec57816aa9c2957e8d32c2; spectate_session=0f3c1e90-718a-461b-9ef0-73c444f1ff6d%3Aanon; odds_format=DECIMAL",
         "content-type": "multipart/form-data; boundary=---011000010111000001101001"
     }
-    if type == 'GET':
+    headers['Cookie'] = cookies
+    if method == 'GET':
         resp = await client.get(url, headers=headers, timeout=15)
-    elif type == 'POST':
+    elif method == 'POST':
         resp = await client.post(url, headers=headers)
     return resp.json()
 
 
-async def get_data(games):
+async def get_data(games, cookies):
     async with httpx.AsyncClient() as client:
         tasks = []
         for game_id in games:
@@ -50,7 +73,7 @@ async def get_data(games):
             if 'mlb' not in game_url:
                 continue
             game_url = game_url.replace('mlb', 'major-league-baseball')
-            tasks.append(asyncio.ensure_future(make_request(client, game_url, 'GET'))) 
+            tasks.append(asyncio.ensure_future(make_request(client, game_url, cookies, 'GET'))) 
         responses = await asyncio.gather(*tasks)
     return responses
 
