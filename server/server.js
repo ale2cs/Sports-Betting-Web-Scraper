@@ -60,7 +60,7 @@ app.get("/positive-lines", async (req, res) => {
         JOIN lines AS L2
         ON L1.line_id = L2.line_id
         )
-        SELECT L2.line_id, M.market_id, 'home' AS bet_type, M.name, M.type, M.period, M.date, M.spov AS sp, M.home_team AS team,
+        SELECT L2.line_id, M.market_id, 'home' AS bet_type, M.sport, M.league, M.name, M.type, M.period, M.date, M.spov AS sp, M.home_team AS team,
             L1.home_odds, L1.away_odds,
             L2.sportsbook AS sportsbook, L2.home_odds AS odds
         FROM recent_line AS L1
@@ -71,7 +71,7 @@ app.get("/positive-lines", async (req, res) => {
         AND L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds)
         AND TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() AT TIME ZONE 'UTC'
 		UNION
-		SELECT L2.line_id, M.market_id, 'away' AS bet_type, M.name, M.type, M.period, M.date, M.spun AS sp, M.away_team AS team,
+		SELECT L2.line_id, M.market_id, 'away' AS bet_type, M.sport, M.league, M.name, M.type, M.period, M.date, M.spun AS sp, M.away_team AS team,
        		L1.home_odds, L1.away_odds,
             L2.sportsbook AS sportsbook, L2.away_odds AS odds
 		FROM recent_line AS L1
@@ -138,7 +138,7 @@ app.get("/positive-lines-test", async (req, res) => {
         JOIN lines AS L2
         ON L1.line_id = L2.line_id
         )
-        SELECT L2.line_id, M.market_id, 'home' AS bet_type, M.name, M.type, M.period, M.date, M.spov AS sp, M.home_team AS team,
+        SELECT L2.line_id, M.market_id, 'home' AS bet_type, M.sport, M.league, M.name, M.type, M.period, M.date, M.spov AS sp, M.home_team AS team,
             L1.home_odds, L1.away_odds,
             L2.sportsbook AS sportsbook, L2.home_odds AS odds
         FROM recent_line AS L1
@@ -148,7 +148,7 @@ app.get("/positive-lines-test", async (req, res) => {
         AND L1.sportsbook <> L2.sportsbook
         AND TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() AT TIME ZONE 'UTC'
 		UNION
-		SELECT L2.line_id, M.market_id, 'away' AS bet_type, M.name, M.type, M.period, M.date, M.spun AS sp, M.away_team AS team,
+		SELECT L2.line_id, M.market_id, 'away' AS bet_type, M.sport, M.league, M.name, M.type, M.period, M.date, M.spun AS sp, M.away_team AS team,
        		L1.home_odds, L1.away_odds,
             L2.sportsbook AS sportsbook, L2.away_odds AS odds
 		FROM recent_line AS L1

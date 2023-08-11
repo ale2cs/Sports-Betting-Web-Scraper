@@ -42,7 +42,7 @@ export default function NoVig() {
       <div className={styles["calc-intro-box"]}>
         <h2 className={styles["calc-head"]}>Margin Calculator</h2>
         <p>
-          The Margin Calculator will convert Odds into Probability and tell you
+          The Margin Calculator will convert Odds into probability and tell you
           how much your bookmaker is charging you.
         </p>
       </div>

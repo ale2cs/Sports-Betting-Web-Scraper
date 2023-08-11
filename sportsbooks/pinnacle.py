@@ -49,18 +49,11 @@ async def make_request(client, url):
 
 
 def parse_market_values(sport): 
-    acronym = {
-        'Nippon Professional Baseball':'NPB'
-    }
     for game_id, league, teams, time in parse_games(sport):
         market_values = {} 
         home_team, away_team = teams[0]['name'], teams[1]['name']
         market_values['game_id'] = game_id
         league_name = league['name']
-
-        if league_name in acronym:
-            league_name = acronym[league_name]
-
         market_values['league'] = league_name
         market_values['sport'] = league['sport']['name']
         market_values['home_team'] = home_team

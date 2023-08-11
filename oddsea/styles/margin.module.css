@@ -4,7 +4,7 @@
 }
 
 .calculator {
-  background-color: #e8ecf3;
+  background-color: #c0cbdc;
   height: 20em;
 }
 
@@ -38,11 +38,7 @@
   margin: 2em 0 1em 2em ;
   width: 105px;
   height: 40px;
-  border: 1px solid #d1d7db;
-}
-
-.odds1::placeholder {
-  color: #d1d7db;
+  border: 1px solid #e0e5ee;
 }
 
 .odds2 {
@@ -51,11 +47,11 @@
   margin: 0 0 2em 2em;
   width: 105px;
   height: 40px;
-  border: 1px solid #d1d7db;
+  border: 1px solid #e0e5ee;
 }
 
-.odds2::placeholder {
-  color: #d1d7db;
+.odds1::placeholder .odds2::placeholder {
+  color: #e0e5ee;
 }
 
 .calc-outputs {
@@ -74,7 +70,7 @@
   width: 110px;
   height: 42px;
   box-sizing: border-box;
-  background-color: #d1d7db;
+  background-color: #e0e5ee;
   margin: 0 0 0 2em;
   font-size: 14px;
   font-weight: bold;
@@ -100,7 +96,7 @@
   width: 220px;
   height: 45px;
   box-sizing: border-box;
-  background-color: #0b1422;
+  background-color: #262b44;
   font-size: 14px;
   font-weight: bold;
   color: white;
