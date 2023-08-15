@@ -13,7 +13,7 @@ dayjs.extend(relativeTime);
 
 const getPositiveLines = async () => {
   try {
-    const resp = await fetch("http://localhost:8080/positive-lines", {
+    const resp = await fetch("http://localhost:8080/positive-ev", {
       cache: "no-store",
     });
     if (!resp.ok) {
@@ -27,7 +27,8 @@ const getPositiveLines = async () => {
 };
 
 export default function ListPositiveLines() {
-  const [postiiveLines, setPositiveLines] = useState([]);
+  const [positiveLines, setPositiveLines] = useState([]);
+  const [listening, setListening] = useState(false);
   const [sorting, setSorting] = useState([
     {
       id: "date",
@@ -80,7 +81,7 @@ export default function ListPositiveLines() {
 
   const table = useReactTable({
     columns,
-    data: postiiveLines,
+    data: positiveLines,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     state: {
@@ -90,13 +91,17 @@ export default function ListPositiveLines() {
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      const data = await getPositiveLines();
-      setPositiveLines(data);
-    };
-
-    fetchData();
-  }, []);
+    if (!listening) {
+      const events = new EventSource(
+        "http://localhost:8080/socket-connection-request"
+      );
+      events.onmessage = (event) => {
+        const parsedData = JSON.parse(event.data);
+        setPositiveLines(parsedData)
+      };
+      setListening(true);
+    }
+  }, [listening, positiveLines]);
 
   return (
     <div>
