@@ -40,7 +40,7 @@ async def get_cookies(base_url):
         )
         page = await context.new_page()
         await page.goto(base_url)
-        await page.wait_for_timeout(5000)
+        await page.wait_for_timeout(1000)
         cookies_list = await context.cookies()
         valid_cookies_list = []
         for cookie in cookies_list:
@@ -61,7 +61,7 @@ async def make_request(client, url, cookies, method):
     } 
     headers['Cookie'] = cookies
     if method == 'GET':
-        resp = await client.get(url, headers=headers, timeout=15)
+        resp = await client.get(url, headers=headers, timeout=30)
     elif method == 'POST':
         resp = await client.post(url, headers=headers)
     return resp.json()

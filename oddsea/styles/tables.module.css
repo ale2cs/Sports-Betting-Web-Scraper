@@ -5,10 +5,11 @@
     border-collapse: collapse;
     margin: 25px auto;
     font-size: 0.9em;
+    text-transform: capitalize;
     min-width: 400px;
     border-radius: 5px 5px 0 0;
     overflow: hidden;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 15px 40px rgba(0, 0, 0, 0.05);
 }
 
 .content-table thead tr {
@@ -19,11 +20,13 @@
 }
 
 .content-table th {
+    min-width: 55px;
     padding: 20px 15px;
 }
 
 .content-table th:nth-child(-n+2):hover {
-    font-size: 1.02em
+    color: #e0e5ee;
+    font-size: 1.01em
 }
 
 .content-table td {

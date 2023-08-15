@@ -24,7 +24,9 @@
   display: block;
 }
 
-.calculators-menu a:hover {background-color: #e0e5ee}
+.calculators-menu a:hover {
+    background-color: #e0e5ee
+}
 
 .calculators-dropdown:hover .calculators-menu {
   display: block;

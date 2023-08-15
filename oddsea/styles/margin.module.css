@@ -1,64 +1,53 @@
-.main-container {
-  width: 45em;
-  margin: 0 auto;
-}
-
-.calculator {
-  background-color: #c0cbdc;
+.margin-calc {
+  background-color: #e0e5ee ;
   height: 20em;
+  border-radius: 5px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05), 0 15px 30px rgba(0, 0, 0, 0.01);
 }
 
-.calc-intro-box {
-  margin-bottom: 20px;
-}
-
-.calc-head {
-  font-size: 36px;
-  margin-bottom: 0px;
-}
-
-.calc-info {
+.margin-info {
   margin: 0 2em -10px 2em;
   padding-top: 35px;
 }
 
 .info-span {
-  padding-left: 80px;
+  padding-left: 87px;
   font-size: 14px;
   font-weight: bold;
 }
 
 .info-span:first-of-type {
-  padding-left: 95px;
+  padding-left: 92px;
+}
+
+
+.info-span:last-of-type {
+  padding-left: 97px;
 }
 
 .odds1 {
   text-align: center;
   font-size: 15px;
   margin: 2em 0 1em 2em ;
-  width: 105px;
-  height: 40px;
-  border: 1px solid #e0e5ee;
+  width: 107px;
+  height: 39px;
+  border: 1px solid #c0cbdc;
 }
 
 .odds2 {
   text-align: center;
   font-size: 15px;
   margin: 0 0 2em 2em;
-  width: 105px;
-  height: 40px;
-  border: 1px solid #e0e5ee;
+  width: 107px;
+  height: 39px;
+  border: 1px solid #c0cbdc;
 }
 
-.odds1::placeholder .odds2::placeholder {
-  color: #e0e5ee;
-}
-
-.calc-outputs {
+.margin-outputs {
   display: inline-block;
 }
 
-.calc-label {
+.margin-label {
   font-size: 14px;
   font-weight: bold;
 }
@@ -70,7 +59,7 @@
   width: 110px;
   height: 42px;
   box-sizing: border-box;
-  background-color: #e0e5ee;
+  background-color: #c0cbdc;
   margin: 0 0 0 2em;
   font-size: 14px;
   font-weight: bold;
@@ -87,7 +76,7 @@
   right: 0;
 }
 
-.margin {
+.margin-output {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -100,9 +89,4 @@
   font-size: 14px;
   font-weight: bold;
   color: white;
-}
-
-.calc-footer {
-  display: inline-block;
-  margin-top: 20px;
 }

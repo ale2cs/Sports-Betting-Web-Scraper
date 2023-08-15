@@ -97,7 +97,7 @@ export default function ListPositiveLines() {
       );
       events.onmessage = (event) => {
         const parsedData = JSON.parse(event.data);
-        setPositiveLines(parsedData)
+        setPositiveLines(parsedData);
       };
       setListening(true);
     }

@@ -1,0 +1,34 @@
+.main-container {
+  width: 45em;
+  margin: 0 auto;
+}
+.main-container ul {
+  list-style-type: none;
+}
+
+.main-container span {
+  border-radius: 5px;
+}
+
+
+.main-container input {
+  border-radius: 5px;
+}
+
+.main-container input:placeholder {
+  color: #e0e5ee;
+}
+
+.calc-head {
+  margin-bottom: 20px;
+}
+
+.calc-header {
+  font-size: 36px;
+  margin-bottom: 0px;
+}
+
+.calc-footer {
+  display: inline-block;
+  margin-top: 20px;
+}

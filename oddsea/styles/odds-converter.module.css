@@ -1,0 +1,43 @@
+.converter-calc {
+  background-color: #e0e5ee;
+  height: 10em;
+  border-radius: 5px;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05), 0 10px 30px rgba(0, 0, 0, 0.01);
+}
+
+.converter-info {
+  margin: 0 2em -10px 2em;
+  padding-top: 35px;
+}
+
+.odds {
+  text-align: center;
+  font-size: 15px;
+  width: 210px;
+  height: 40px;
+  border: 1px solid #c0cbdc;
+}
+.calc-content {
+  display: flex;
+  justify-content: center;
+
+}
+
+.calc-conversion {
+  display: flex;
+  flex-direction: row;
+  padding: 0px;
+}
+
+.calc-conversion li {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 10px;
+  text-align: center;
+}
+
+.calc-conversion label {
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: bold;
+}

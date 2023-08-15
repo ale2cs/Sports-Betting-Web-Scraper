@@ -68,7 +68,7 @@ async def main():
             print((home_away, payout), f"Vig:{stats.vig}%", f"EV:{stats.pos_ev}%", f"Wager:${stats.bet_amount}", f"RemTime:{rem_time(market[3])}")
             print('')
 
-        time.sleep(60)
+        time.sleep(30)
 
 def create_conn():
     conn = None
