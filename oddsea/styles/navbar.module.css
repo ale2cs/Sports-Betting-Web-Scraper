@@ -25,7 +25,8 @@
 }
 
 .calculators-menu a:hover {
-    background-color: #e0e5ee
+  color: #ffffff; 
+  background-color: #262b44;
 }
 
 .calculators-dropdown:hover .calculators-menu {

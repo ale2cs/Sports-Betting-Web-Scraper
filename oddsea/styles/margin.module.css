@@ -110,10 +110,10 @@
 
 @media (min-width: 45rem) {
   .field-names {
-    width: 75.5%;
+    width: 77.5%;
     display: grid;
-    grid-template-columns: 1fr 1.1fr 1.2fr 1.1fr;
-    margin-left: 9.4rem;
+    grid-template-columns: 1fr 1fr 1.2fr 1fr;
+    margin-left: 9rem;
   }
 
   .field-label {

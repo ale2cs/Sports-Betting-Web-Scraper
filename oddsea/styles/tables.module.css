@@ -1,5 +1,6 @@
 .title {
-    text-align: center;
+  text-align: center;
+  font-size: 32px;
 }
 .content-table {
     border-collapse: collapse;
@@ -26,7 +27,7 @@
 
 .content-table th:nth-child(-n+2):hover {
     color: #e0e5ee;
-    font-size: 1.01em
+    font-weight: 900;
 }
 
 .content-table td {
