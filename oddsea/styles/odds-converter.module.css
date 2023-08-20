@@ -1,43 +1,43 @@
-.converter-calc {
-  background-color: #e0e5ee;
-  height: 10em;
-  border-radius: 5px;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05), 0 10px 30px rgba(0, 0, 0, 0.01);
-}
-
-.converter-info {
-  margin: 0 2em -10px 2em;
-  padding-top: 35px;
-}
-
-.odds {
-  text-align: center;
-  font-size: 15px;
-  width: 210px;
-  height: 40px;
-  border: 1px solid #c0cbdc;
-}
-.calc-content {
-  display: flex;
-  justify-content: center;
-
+.converters {
+  width: 95%;
+  margin-inline: auto;
 }
 
 .calc-conversion {
-  display: flex;
-  flex-direction: row;
-  padding: 0px;
+  padding: 1rem 0;
 }
 
 .calc-conversion li {
-  display: flex;
-  flex-direction: column;
-  padding: 20px 10px;
-  text-align: center;
+  margin: 0.5rem 0;
 }
 
 .calc-conversion label {
-  margin-bottom: 10px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: bold;
 }
+
+.calc-conversion input {
+  width: 100%;
+  height: 2.75rem;
+  box-sizing: border-box;
+  padding: 0.5rem;
+  border: 1px solid #c0cbdc;
+  margin-top: 0.25rem;
+  text-align: center;
+  font-size: 0.9375rem;
+  color:#262b44;
+}
+
+@media (min-width: 45rem) {
+  .calc-conversion {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.5rem;
+    margin: 0;
+  } 
+
+  .calc-conversion li {
+    text-align: center;
+  }
+}
+

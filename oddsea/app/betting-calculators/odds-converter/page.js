@@ -34,60 +34,67 @@ export default function OddsConverter() {
     setFractional(event.target.value);
   };
   return (
-    <main className={calcStyles["main-container"]}>
-      <div className={calcStyles["calc-head"]}>
-        <h2 className={calcStyles["calc-header"]}>Odds Converter Calculator</h2>
-        <p>
+    <div>
+      <header className={calcStyles["calc-head"]}>
+        <h1 className={calcStyles["calc-header"]}>Odds Converter Calculator</h1>
+        <aside>
           Our Odds Converter will convert Decimal odds, American odds and
           Fractional odds into your chosen odds format.
-        </p>
-      </div>
-      <section className={convertStyles["converter-calc"]}>
-        <div className={convertStyles["calc-content"]}>
-          <form>
-            <ul className={convertStyles["calc-conversion"]}>
-              <li>
-                <label className={convertStyles}>American</label>
-                <input
-                  name="american"
-                  className={convertStyles.odds}
-                  placeholder="+100"
-                  type="string"
-                  id="american"
-                  onChange={(event) => changeAmerican(event)}
-                  value={american}
-                ></input>
-              </li>
-              <li>
-                <label className={convertStyles}>Decimal</label>
-                <input
-                  name="decimal"
-                  className={convertStyles.odds}
-                  placeholder="2.00"
-                  type="string"
-                  id="decimal"
-                  onChange={(event) => changeDecimal(event)}
-                  value={decimal}
-                ></input>
-              </li>
-              <li>
-                <label className={convertStyles}>Fractional</label>
-                <input
-                  name="fractional"
-                  className={convertStyles.odds}
-                  placeholder="1/1"
-                  type="string"
-                  id="fractional"
-                  onChange={(event) => changeFractional(event)}
-                  value={fractional}
-                ></input>
-              </li>
-            </ul>
-          </form>
-        </div>
-        <div className={convertStyles["calc-footer"]}>
+        </aside>
+      </header>
+      <main className={calcStyles["main-container"]}>
+        <section className={calcStyles["calc-content"]}>
+          <div className={convertStyles.converters}>
+            <form>
+              <ul className={convertStyles["calc-conversion"]}>
+                <li>
+                  <label>American</label>
+                  <input
+                    name="american"
+                    placeholder="+100"
+                    type="string"
+                    id="american"
+                    onChange={(event) => changeAmerican(event)}
+                    value={american}
+                  ></input>
+                </li>
+                <li>
+                  <label>Decimal</label>
+                  <input
+                    name="decimal"
+                    placeholder="2.00"
+                    type="string"
+                    id="decimal"
+                    onChange={(event) => changeDecimal(event)}
+                    value={decimal}
+                  ></input>
+                </li>
+                <li>
+                  <label>Fractional</label>
+                  <input
+                    name="fractional"
+                    placeholder="1/1"
+                    type="string"
+                    id="fractional"
+                    onChange={(event) => changeFractional(event)}
+                    value={fractional}
+                  ></input>
+                </li>
+                <li>
+                  <label>Implied Probability</label>
+                  <input
+                    name="implied-probability"
+                    placeholder="47.6%"
+                    type="string"
+                    id="implied-probability"
+                  ></input>
+                </li>
+              </ul>
+            </form>
+          </div>
+        </section>
+        <section className={calcStyles["calc-footer"]}>
           <p>
-            <br />
             Like a personal preference for internet browsers, most bettors have
             their favourite odds format, which is why we have created a handy
             Odds Converter Calculator. These preferences tend to follow cultural
@@ -124,8 +131,8 @@ export default function OddsConverter() {
             Convert seamlessly between American, Decimal and Fractional odds and
             start learning the shortcuts for yourself.
           </p>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </div>
   );
 }
