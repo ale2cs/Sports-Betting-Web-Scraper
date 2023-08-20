@@ -26,7 +26,6 @@ export default function NoVig() {
       setFairOdds2(fair2);
     }
     if (prob2 != 0) {
-
       setfairProbability1((prob1 * 100).toFixed(2));
       setFairOdds1(fair1);
     }
@@ -54,82 +53,137 @@ export default function NoVig() {
   }, [odds1, odds2]);
 
   return (
-    <main className={calcStyles["main-container"]}>
-      <div className={calcStyles["calc-head"]}>
-        <h2 className={calcStyles["calc-header"]}>Margin Calculator</h2>
-        <p>
+    <div>
+      <header className={calcStyles["calc-head"]}>
+        <h1 className={calcStyles["calc-header"]}>Margin Calculator</h1>
+        <aside>
           The Margin Calculator will convert Odds into probability and tell you
           how much your bookmaker is charging you.
-        </p>
-      </div>
-      <section className={marginStyles["margin-calc"]}>
-        <div className={marginStyles["calc-controls"]}></div>
-        <div className={marginStyles["calc-content"]}>
+        </aside>
+      </header>
+      <main className={calcStyles["main-container"]}>
+        <section className={calcStyles["calc-content"]}>
+          <div className={marginStyles.controls}>
+            <label className={marginStyles["select-format-label"]}>
+              Odds Format:
+            </label>
+            <select className={marginStyles["select-odds"]}>
+              <option value="">American</option>
+              <option value="" selected>
+                Decimal
+              </option>
+              <option value="">Fractional</option>
+            </select>
+          </div>
           <form>
             <ul>
               <li>
-                <div className={marginStyles["margin-info"]}>
-                  <span className={marginStyles["info-span"]}>Odds</span>
-                  <span className={marginStyles["info-span"]}>Bookmaker</span>
-                  <span className={marginStyles["info-span"]}>Fair</span>
-                  <span className={marginStyles["info-span"]}>Fair Odds</span>
+                <div className={marginStyles["field-names"]}>
+                  <label className={marginStyles["field-label"]}>Odds</label>
+                  <label className={marginStyles["field-label"]}>
+                    Bookmaker
+                  </label>
+                  <label className={marginStyles["field-label"]}>Fair</label>
+                  <label className={marginStyles["field-label"]}>
+                    Fair Odds
+                  </label>
                 </div>
               </li>
               <li>
-                <label className={marginStyles["margin-label"]}>Option 1</label>
-                <input
-                  className={marginStyles.odds1}
-                  name="odds1"
-                  placeholder="Enter odds"
-                  type="string"
-                  id="odds1"
-                  onChange={(event) => changeOdds1(event)}
-                ></input>
-                <div className={marginStyles["margin-outputs"]}>
-                  <span className={marginStyles["output-span"]}>
-                    {validate(bookmakerProbability1)}
-                    %
-                  </span>
-                  <span className={marginStyles["output-span"]}>
-                    {validate(fairProbability1)}%
-                  </span>
-                  <span className={marginStyles["output-span"]}>
-                    {validate(fairOdds1)}
-                  </span>
+                <div className={marginStyles.option}>
+                  <label className={marginStyles["option-label"]}>
+                    Option 1
+                  </label>
+                  <input
+                    className={marginStyles.odds}
+                    name="odds1"
+                    placeholder="Enter odds"
+                    type="string"
+                    id="odds1"
+                    onChange={(event) => changeOdds1(event)}
+                  ></input>
+                  <div className={marginStyles.outputs}>
+                    <div className={marginStyles["outputs-small"]}>
+                      <label className={marginStyles["field-label-small"]}>
+                        Bookmaker
+                      </label>
+                      <span className={marginStyles["output-span"]}>
+                        {validate(bookmakerProbability1)}%
+                      </span>
+                    </div>
+                    <div className={marginStyles["outputs-small"]}>
+                      <label className={marginStyles["field-label-small"]}>
+                        Fair
+                      </label>
+                      <span className={marginStyles["output-span"]}>
+                        {validate(fairProbability1)}%
+                      </span>
+                    </div>
+                    <div className={marginStyles["outputs-small"]}>
+                      <label className={marginStyles["field-label-small"]}>
+                        Fair Odds
+                      </label>
+                      <span className={marginStyles["output-span"]}>
+                        {validate(fairOdds1)}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </li>
               <li>
-                <label className={marginStyles["margin-label"]}>Option 2</label>
-                <input
-                  className={marginStyles.odds2}
-                  name="odds2"
-                  placeholder="Enter odds"
-                  type="string"
-                  id="odds2"
-                  onChange={(event) => changeOdds2(event)}
-                ></input>
-                <span className={marginStyles["output-span"]}>
-                  {validate(bookmakerProbability2)}%
-                </span>
-                <span className={marginStyles["output-span"]}>
-                  {validate(fairProbability2)}%
-                </span>
-                <span className={marginStyles["output-span"]}>{validate(fairOdds2)}</span>
+                <div className={marginStyles.option}>
+                  <label className={marginStyles["option-label"]}>
+                    Option 2
+                  </label>
+                  <input
+                    className={marginStyles.odds}
+                    name="odds2"
+                    placeholder="Enter odds"
+                    type="string"
+                    id="odds2"
+                    onChange={(event) => changeOdds2(event)}
+                  ></input>
+
+                  <div className={marginStyles.outputs}>
+                    <div className={marginStyles["outputs-small"]}>
+                      <label className={marginStyles["field-label-small"]}>
+                        Bookmaker
+                      </label>
+                      <span className={marginStyles["output-span"]}>
+                        {validate(bookmakerProbability2)}%
+                      </span>
+                    </div>
+                    <div className={marginStyles["outputs-small"]}>
+                      <label className={marginStyles["field-label-small"]}>
+                        Fair
+                      </label>
+                      <span className={marginStyles["output-span"]}>
+                        {validate(fairProbability2)}%
+                      </span>
+                    </div>
+                    <div className={marginStyles["outputs-small"]}>
+                      <label className={marginStyles["field-label-small"]}>
+                        Fair Odds
+                      </label>
+                      <span className={marginStyles["output-span"]}>
+                        {validate(fairOdds2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </li>
             </ul>
           </form>
-          <div className={marginStyles.totals}>
-            <div className={marginStyles.row}>
+            <div className={marginStyles.totals}>
               <label className={marginStyles["margin-label"]}>Margin</label>
               <span className={marginStyles["margin-output"]}>
                 {validate(margin)}%
               </span>
             </div>
-          </div>
-        </div>
-        <div className={calcStyles["calc-footer"]}>
+        </section>
+        <section className={calcStyles["calc-footer"]}>
           <p>
-            <br />A bookmaker's margin is essentially what they charge you for
+            A bookmaker's margin is essentially what they charge you for
             placing a bet. Sharp bettors will be aware of what a margin is and
             how to work it out but for those that don't, our Margin Calculator
             will do the work for you.
@@ -149,8 +203,8 @@ export default function NoVig() {
             margins to other bookmakers and understand why serious bettors bet
             with Pinnacle.
           </p>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
+    </div>
   );
 }
