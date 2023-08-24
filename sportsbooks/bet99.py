@@ -121,7 +121,10 @@ def format_lines(bets, values, bet_type_dict):
         bet_type = bet_type_dict[bet['Name']]
         home, away = bet['Items'][0], bet['Items'][1] 
         home_odds, away_odds = home['Price'], away['Price']
-        spov, spun = home['SPOV'], away['SPOV']
+        if bet_type == 'moneyline':
+            spov = spun = ''
+        else:
+            spov, spun = home['SPOV'], away['SPOV']
         if bet_type == "spread":
             if spov[0] == '-':
                 spun = f"+{add_dec(spun[1:])}"
