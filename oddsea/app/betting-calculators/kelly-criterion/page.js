@@ -5,45 +5,62 @@ import kellyStyles from "styles/kelly.module.css";
 import { ev, kellyCriterion } from "utils/calculator-utils";
 
 export default function KellyCriterion() {
-  const [multiplier, setMultiplier] = useState(0.00);
-  const [bankroll, setBankroll] = useState(0.00);
-  const [odds, setOdds] = useState(0.00);
-  const [winPercentage, setWinPercentage] = useState(0.00);
-  const [evPercentage, setEvPercentage] = useState('0.00');
-  const [evDollar, setEvDollar] = useState('0.00');
-  const [wagerPercentage, setWagerPercentage] = useState('0.00');
-  const [wagerDollar, setWagerDollar] = useState('0.00');
+  const [inputs, setInputs] = useState({
+    multiplier: 0,
+    bankroll: 0,
+    odds: 0,
+    winProbability: 0,
+  });
+  const [outputs, setOutputs] = useState({
+    evPercentage: "0.00",
+    wagerPercentage: "0.00",
+    evDollar: "0.00",
+    wagerDollar: "0.00",
+  });
 
-  const changeMultiplier = (event) => {
-    setMultiplier(parseFloat(event.target.value));
+  const changeInputs = (e) => {
+    const { name, value } = e.target;
+    setInputs((prevValues) => {
+      return { ...prevValues, [name]: value };
+    });
   };
 
-  const changeBankroll = (event) => {
-    setBankroll(parseFloat(event.target.value));
-  };
-
-  const changeOdds = (event) => {
-    setOdds(parseFloat(event.target.value));
-  };
-
-  const changeWinPercentage = (event) => {
-    setWinPercentage(parseFloat(event.target.value));
+  const changeOutputs = (key, value) => {
+    setOutputs((prevValues) => {
+      return { ...prevValues, [key]: value };
+    });
   };
 
   const calculate = () => {
-    let expectedValue = ev(winPercentage / 100, odds);
-    let kelly = kellyCriterion(winPercentage / 100, odds);
-    if (odds != 0 && winPercentage != 0) {
-      setEvPercentage((expectedValue * 100).toFixed(2));
-      setWagerPercentage((multiplier * kelly * 100).toFixed(2));
-      setEvDollar((expectedValue * multiplier * kelly * bankroll).toFixed(2));
-      setWagerDollar((multiplier * kelly * bankroll).toFixed(2));
+    let multiplier = inputs.multiplier;
+    let bankroll = inputs.bankroll;
+    let odds = inputs.odds;
+    let winProbability = inputs.winProbability;
+    let expectedValue = ev(winProbability / 100, odds);
+    let kelly = kellyCriterion(winProbability / 100, odds);
+
+    if (odds != 0 && winProbability != 0) {
+      changeOutputs("evPercentage", (expectedValue * 100).toFixed(2));
+    } else {
+      changeOutputs("evPercentage", "0.00");
     }
-  }
+    if (expectedValue > 0) {
+      changeOutputs("wagerPercentage", (multiplier * kelly * 100).toFixed(2));
+      changeOutputs(
+        "evDollar",
+        (expectedValue * multiplier * kelly * bankroll).toFixed(2)
+      );
+      changeOutputs("wagerDollar", (multiplier * kelly * bankroll).toFixed(2));
+    } else {
+      changeOutputs("wagerPercentage", "0.00");
+      changeOutputs("evDollar", "0.00");
+      changeOutputs("wagerDollar", "0.00");
+    }
+  };
 
   useEffect(() => {
     calculate();
-  }, [multiplier, bankroll, odds, winPercentage])
+  }, [inputs]);
 
   return (
     <div>
@@ -68,17 +85,17 @@ export default function KellyCriterion() {
                     placeholder="Enter Multiplier"
                     type="string"
                     id="american"
-                    onChange={(event) => changeMultiplier(event)}
+                    onChange={(e) => changeInputs(e)}
                   ></input>
                 </li>
                 <li>
                   <label>Bankroll</label>
                   <input
-                    name="multiplier"
+                    name="bankroll"
                     placeholder="Enter Multiplier"
                     type="string"
                     id="american"
-                    onChange={(event) => changeBankroll(event)}
+                    onChange={(e) => changeInputs(e)}
                   ></input>
                 </li>
                 <li>
@@ -88,17 +105,17 @@ export default function KellyCriterion() {
                     placeholder="Enter Odds"
                     type="string"
                     id="decimal"
-                    onChange={(event) => changeOdds(event)}
+                    onChange={(e) => changeInputs(e)}
                   ></input>
                 </li>
                 <li>
-                  <label>Win %</label>
+                  <label>Win Probability</label>
                   <input
-                    name="win-percentage"
-                    placeholder="Enter Win Percentage"
+                    name="winProbability"
+                    placeholder="Enter Win Probability"
                     type="string"
                     id="fractional"
-                    onChange={(event) => changeWinPercentage(event)}
+                    onChange={(e) => changeInputs(e)}
                   ></input>
                 </li>
               </ul>
@@ -106,19 +123,19 @@ export default function KellyCriterion() {
             <div className={kellyStyles.totals}>
               <div className={kellyStyles.output}>
                 <label>Expected Value %</label>
-                <span>{evPercentage}%</span>
+                <span>{outputs.evPercentage}%</span>
               </div>
               <div className={kellyStyles.output}>
                 <label>Wager %</label>
-                <span>{wagerPercentage}%</span>
+                <span>{outputs.wagerPercentage}%</span>
               </div>
               <div className={kellyStyles.output}>
                 <label>Expected Value $</label>
-                <span>${evDollar}</span>
+                <span>${outputs.evDollar}</span>
               </div>
               <div className={kellyStyles.output}>
                 <label>Wager $</label>
-                <span>${wagerDollar}</span>
+                <span>${outputs.wagerDollar}</span>
               </div>
             </div>
           </div>
