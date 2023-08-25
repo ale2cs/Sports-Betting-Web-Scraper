@@ -15,12 +15,14 @@ export default function OddsConverter() {
   const [american, setAmerican] = useState(110);
   const [decimal, setDecimal] = useState(2.1);
   const [fractional, setFractional] = useState(11 / 10);
+  const [impliedProbability, setImpliedProbability] = useState((1/2.1).toFixed(4));
 
   const changeAmerican = (event) => {
     let integer = parseInt(event.target.value);
     setAmerican(integer);
     setDecimal(americanToDecimal(integer));
     setFractional(americanToFractional(integer));
+    setImpliedProbability((1/decimal).toFixed(4));
   };
 
   const changeDecimal = (event) => {
@@ -28,11 +30,16 @@ export default function OddsConverter() {
     setDecimal(float);
     setAmerican(decimalToAmerican(float).toFixed());
     setFractional(decimalToFractional(float));
+    setImpliedProbability((1/decimal).toFixed(4));
   };
 
   const changeFractional = (event) => {
     setFractional(event.target.value);
   };
+
+  const changeImpliedProbability = (event) => {
+    setImpliedProbability(event.target.value);
+  }
   return (
     <div>
       <header className={calcStyles["calc-head"]}>
@@ -87,6 +94,8 @@ export default function OddsConverter() {
                     placeholder="47.6%"
                     type="string"
                     id="implied-probability"
+                    onChange={(event) => changeImpliedProbability(event)}
+                    value={impliedProbability}
                   ></input>
                 </li>
               </ul>

@@ -1,7 +1,50 @@
+"use client";
+import { useEffect, useState } from "react";
 import calcStyles from "styles/calculators.module.css";
 import kellyStyles from "styles/kelly.module.css";
+import { ev, kellyCriterion } from "utils/calculator-utils";
 
 export default function KellyCriterion() {
+  const [multiplier, setMultiplier] = useState(0.00);
+  const [bankroll, setBankroll] = useState(0.00);
+  const [odds, setOdds] = useState(0.00);
+  const [winPercentage, setWinPercentage] = useState(0.00);
+  const [evPercentage, setEvPercentage] = useState('0.00');
+  const [evDollar, setEvDollar] = useState('0.00');
+  const [wagerPercentage, setWagerPercentage] = useState('0.00');
+  const [wagerDollar, setWagerDollar] = useState('0.00');
+
+  const changeMultiplier = (event) => {
+    setMultiplier(parseFloat(event.target.value));
+  };
+
+  const changeBankroll = (event) => {
+    setBankroll(parseFloat(event.target.value));
+  };
+
+  const changeOdds = (event) => {
+    setOdds(parseFloat(event.target.value));
+  };
+
+  const changeWinPercentage = (event) => {
+    setWinPercentage(parseFloat(event.target.value));
+  };
+
+  const calculate = () => {
+    let expectedValue = ev(winPercentage / 100, odds);
+    let kelly = kellyCriterion(winPercentage / 100, odds);
+    if (odds != 0 && winPercentage != 0) {
+      setEvPercentage((expectedValue * 100).toFixed(2));
+      setWagerPercentage((multiplier * kelly * 100).toFixed(2));
+      setEvDollar((expectedValue * multiplier * kelly * bankroll).toFixed(2));
+      setWagerDollar((multiplier * kelly * bankroll).toFixed(2));
+    }
+  }
+
+  useEffect(() => {
+    calculate();
+  }, [multiplier, bankroll, odds, winPercentage])
+
   return (
     <div>
       <header className={calcStyles["calc-head"]}>
@@ -15,46 +58,70 @@ export default function KellyCriterion() {
       </header>
       <main className={calcStyles["main-container"]}>
         <section className={calcStyles["calc-content"]}>
-          <form>
-            <ul className={kellyStyles["calc-wager"]}>
-              <li>
-                <label>Kelly Multiplier</label>
-                <input
-                  name="multiplier"
-                  placeholder="Enter Multiplier"
-                  type="string"
-                  id="american"
-                ></input>
-              </li>
-              <li>
-                <label>Bankroll</label>
-                <input
-                  name="multiplier"
-                  placeholder="Enter Multiplier"
-                  type="string"
-                  id="american"
-                ></input>
-              </li>
-              <li>
-                <label>Odds</label>
-                <input
-                  name="odds"
-                  placeholder="Enter Odds"
-                  type="string"
-                  id="decimal"
-                ></input>
-              </li>
-              <li>
-                <label>Win %</label>
-                <input
-                  name="win-percentage"
-                  placeholder="Enter Win Percentage"
-                  type="string"
-                  id="fractional"
-                ></input>
-              </li>
-            </ul>
-          </form>
+          <div className={kellyStyles["content"]}>
+            <form>
+              <ul className={kellyStyles["field"]}>
+                <li>
+                  <label>Kelly Multiplier</label>
+                  <input
+                    name="multiplier"
+                    placeholder="Enter Multiplier"
+                    type="string"
+                    id="american"
+                    onChange={(event) => changeMultiplier(event)}
+                  ></input>
+                </li>
+                <li>
+                  <label>Bankroll</label>
+                  <input
+                    name="multiplier"
+                    placeholder="Enter Multiplier"
+                    type="string"
+                    id="american"
+                    onChange={(event) => changeBankroll(event)}
+                  ></input>
+                </li>
+                <li>
+                  <label>Odds</label>
+                  <input
+                    name="odds"
+                    placeholder="Enter Odds"
+                    type="string"
+                    id="decimal"
+                    onChange={(event) => changeOdds(event)}
+                  ></input>
+                </li>
+                <li>
+                  <label>Win %</label>
+                  <input
+                    name="win-percentage"
+                    placeholder="Enter Win Percentage"
+                    type="string"
+                    id="fractional"
+                    onChange={(event) => changeWinPercentage(event)}
+                  ></input>
+                </li>
+              </ul>
+            </form>
+            <div className={kellyStyles.totals}>
+              <div className={kellyStyles.output}>
+                <label>Expected Value %</label>
+                <span>{evPercentage}%</span>
+              </div>
+              <div className={kellyStyles.output}>
+                <label>Wager %</label>
+                <span>{wagerPercentage}%</span>
+              </div>
+              <div className={kellyStyles.output}>
+                <label>Expected Value $</label>
+                <span>${evDollar}</span>
+              </div>
+              <div className={kellyStyles.output}>
+                <label>Wager $</label>
+                <span>${wagerDollar}</span>
+              </div>
+            </div>
+          </div>
         </section>
         <section className={calcStyles["calc-footer"]}>
           <p>

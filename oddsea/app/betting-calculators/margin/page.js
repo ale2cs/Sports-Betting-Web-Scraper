@@ -4,7 +4,7 @@ import { vig, noVigOdds, impliedProbability } from "utils/calculator-utils";
 import calcStyles from "styles/calculators.module.css";
 import marginStyles from "styles/margin.module.css";
 
-export default function NoVig() {
+export default function Margin() {
   const [odds1, setOdds1] = useState(0);
   const [odds2, setOdds2] = useState(0);
   const [margin, setMargin] = useState(0);

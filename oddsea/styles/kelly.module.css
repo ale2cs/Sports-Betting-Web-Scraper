@@ -1,19 +1,22 @@
-.calc-wager {
+.content {
   width: 95%;
-  margin-inline: auto;
   padding: 1rem 0;
+  margin-inline: auto;
 }
 
-.calc-wager li {
+.field {
+}
+
+.field li {
   margin: 0.5rem 0;
 }
 
-.calc-wager label {
+.field label {
   font-size: 0.875rem;
   font-weight: bold;
 }
 
-.calc-wager input {
+.field input {
   width: 100%;
   height: 2.75rem;
   box-sizing: border-box;
@@ -25,14 +28,61 @@
   color:#262b44;
 }
 
+.totals {
+  width: 100%;
+  text-align: center;
+}
+
+.output {
+  display: flex;
+  margin: 0.5rem 0;
+}
+
+.output label {
+  width: 50%;
+  font-size: 0.875rem;
+  font-weight: bold;
+  margin-left: auto;
+  margin: auto 0;
+}
+
+.output span {
+  width: 50%;
+  background-color: #c0cbdc;
+  padding: 0.625rem 0;
+  font-size: 0.875rem;
+  font-weight: bold;
+  margin-right: auto;
+}
+
+.output:last-child span{
+  background-color: #262b44;
+  color: #ffffffff;
+}
+
 @media (min-width: 45rem) {
-  .calc-wager {
+  .content {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.5rem;
+    grid-template-columns: repeat(2, 1fr);
   }
-  .calc-wager li {
+
+  .field {
+    display: inline-grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  .field li {
     text-align: center;
   }
 
+  .totals {
+    margin: auto 0;
+  }
+
+  .output label{
+    text-align: right;
+    margin-right: 1rem;
+  }
 }
