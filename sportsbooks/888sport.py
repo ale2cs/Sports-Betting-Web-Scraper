@@ -40,7 +40,7 @@ async def get_cookies(base_url):
         )
         page = await context.new_page()
         await page.goto(base_url)
-        await page.wait_for_timeout(1500)
+        await page.wait_for_timeout(5000)
         cookies_list = await context.cookies()
         valid_cookies_list = []
         for cookie in cookies_list:

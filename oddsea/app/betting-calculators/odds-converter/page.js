@@ -1,45 +1,64 @@
 "use client";
 import { useState } from "react";
 import {
-  americanToDecimal,
-  americanToFractional,
-  decimalToAmerican,
-  decimalToFractional,
-  fractionalToAmerican,
-  fractionalToDecimal,
+  convertOdds,
+  oddsToProbability,
+  probabilityToOdds,
 } from "utils/calculator-utils";
 import calcStyles from "styles/calculators.module.css";
 import convertStyles from "styles/odds-converter.module.css";
 
 export default function OddsConverter() {
-  const [american, setAmerican] = useState(110);
-  const [decimal, setDecimal] = useState(2.1);
-  const [fractional, setFractional] = useState(11 / 10);
-  const [impliedProbability, setImpliedProbability] = useState((1/2.1).toFixed(4));
+  const [american, setAmerican] = useState("");
+  const [decimal, setDecimal] = useState("");
+  const [fractional, setFractional] = useState("");
+  const [probability, setProbability] = useState("");
 
-  const changeAmerican = (event) => {
-    let integer = parseInt(event.target.value);
-    setAmerican(integer);
-    setDecimal(americanToDecimal(integer));
-    setFractional(americanToFractional(integer));
-    setImpliedProbability((1/decimal).toFixed(4));
+  const changeOdds = (e) => {
+    const {name, value} = e.target;
+    const num = parseFloat(value);
+    if (value == "") {
+      setAmerican("");
+      setDecimal("");
+      setFractional("");
+      setProbability("");
+    } else {
+      switch (name) {
+        case "american":
+          setAmerican(value);
+          setDecimal(convertOdds("american-decimal", num));
+          setFractional(convertOdds("american-fractional", num));
+          setProbability(oddsToProbability("american", num));
+          break;
+        case "decimal":
+          setDecimal(value);
+          setAmerican(convertOdds("decimal-american", num));
+          setFractional(convertOdds("decimal-fractional", num));
+          setProbability(oddsToProbability("decimal", num));
+          break;
+        case "fractional":
+          const fractionalOddsPattern = /^(\d+)\/(\d+)$/;
+          setFractional(value);
+          if (fractionalOddsPattern.test(value)) {
+            const [numerator, denominator] = value.split("/");
+            const decimalValue = parseInt(numerator) / parseInt(denominator);
+            setAmerican(convertOdds("fractional-american", decimalValue));
+            setDecimal(convertOdds("fractional-decimal", decimalValue));
+            setProbability(oddsToProbability("fractional", decimalValue));
+          } else {
+            setDecimal("");
+          }
+          break;
+        case "impliedProbability":
+          setProbability(value);
+          setAmerican(probabilityToOdds("american", value));
+          setDecimal(probabilityToOdds("decimal", value));
+          setFractional(probabilityToOdds("fractional", value));
+          break;
+      }
+    }
   };
 
-  const changeDecimal = (event) => {
-    let float = parseFloat(event.target.value);
-    setDecimal(float);
-    setAmerican(decimalToAmerican(float).toFixed());
-    setFractional(decimalToFractional(float));
-    setImpliedProbability((1/decimal).toFixed(4));
-  };
-
-  const changeFractional = (event) => {
-    setFractional(event.target.value);
-  };
-
-  const changeImpliedProbability = (event) => {
-    setImpliedProbability(event.target.value);
-  }
   return (
     <div>
       <header className={calcStyles["calc-head"]}>
@@ -58,10 +77,10 @@ export default function OddsConverter() {
                   <label>American</label>
                   <input
                     name="american"
-                    placeholder="+100"
+                    placeholder="+110"
                     type="string"
                     id="american"
-                    onChange={(event) => changeAmerican(event)}
+                    onInput={(e) => changeOdds(e)}
                     value={american}
                   ></input>
                 </li>
@@ -69,10 +88,10 @@ export default function OddsConverter() {
                   <label>Decimal</label>
                   <input
                     name="decimal"
-                    placeholder="2.00"
+                    placeholder="2.100"
                     type="string"
                     id="decimal"
-                    onChange={(event) => changeDecimal(event)}
+                    onInput={(e) => changeOdds(e)}
                     value={decimal}
                   ></input>
                 </li>
@@ -80,22 +99,22 @@ export default function OddsConverter() {
                   <label>Fractional</label>
                   <input
                     name="fractional"
-                    placeholder="1/1"
+                    placeholder="11/10"
                     type="string"
                     id="fractional"
-                    onChange={(event) => changeFractional(event)}
+                    onChange={(e) => changeOdds(e)}
                     value={fractional}
                   ></input>
                 </li>
                 <li>
                   <label>Implied Probability</label>
                   <input
-                    name="implied-probability"
-                    placeholder="47.6%"
+                    name="impliedProbability"
+                    placeholder="47.62%"
                     type="string"
-                    id="implied-probability"
-                    onChange={(event) => changeImpliedProbability(event)}
-                    value={impliedProbability}
+                    id="impliedProbability"
+                    onChange={(e) => changeOdds(e)}
+                    value={probability}
                   ></input>
                 </li>
               </ul>

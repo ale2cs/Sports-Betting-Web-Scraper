@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import calcStyles from "styles/calculators.module.css";
 import kellyStyles from "styles/kelly.module.css";
-import { ev, kellyCriterion } from "utils/calculator-utils";
+import { ev, kellyCriterion, validate } from "utils/calculator-utils";
 
 export default function KellyCriterion() {
   const [inputs, setInputs] = useState({
@@ -21,7 +21,7 @@ export default function KellyCriterion() {
   const changeInputs = (e) => {
     const { name, value } = e.target;
     setInputs((prevValues) => {
-      return { ...prevValues, [name]: value };
+      return { ...prevValues, [name]: parseFloat(value) };
     });
   };
 
@@ -123,7 +123,7 @@ export default function KellyCriterion() {
             <div className={kellyStyles.totals}>
               <div className={kellyStyles.output}>
                 <label>Expected Value %</label>
-                <span>{outputs.evPercentage}%</span>
+                <span>{validate(outputs.evPercentage)}%</span>
               </div>
               <div className={kellyStyles.output}>
                 <label>Wager %</label>

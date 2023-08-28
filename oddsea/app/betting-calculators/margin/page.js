@@ -1,6 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
-import { vig, noVigOdds, impliedProbability } from "utils/calculator-utils";
+import {
+  vig,
+  noVigOdds,
+  impliedProbability,
+  americanToDecimal,
+  fractionalToDecimal,
+  validate,
+} from "utils/calculator-utils";
 import calcStyles from "styles/calculators.module.css";
 import marginStyles from "styles/margin.module.css";
 
@@ -37,27 +44,17 @@ export default function Margin() {
     let odds2 = inputs.odds2;
     let [prob1, prob2] = impliedProbability(odds1, odds2);
     let [fair1, fair2] = noVigOdds(odds1, odds2);
-    changeOutputs('margin', vig(odds1, odds2).toFixed(2));
-    changeOutputs('bookmakerProbability1', (((1 / odds1) * 100).toFixed(2)));
-    changeOutputs('bookmakerProbability2', (((1 / odds2) * 100).toFixed(2)));
+    changeOutputs("margin", vig(odds1, odds2).toFixed(2));
+    changeOutputs("bookmakerProbability1", ((1 / odds1) * 100).toFixed(2));
+    changeOutputs("bookmakerProbability2", ((1 / odds2) * 100).toFixed(2));
     if (prob1 != 0) {
-      changeOutputs('fairProbability2',((prob2 * 100).toFixed(2)));
-      changeOutputs('fairOdds2', fair2)
+      changeOutputs("fairProbability2", (prob2 * 100).toFixed(2));
+      changeOutputs("fairOdds2", fair2);
     }
     if (prob2 != 0) {
-      changeOutputs('fairProbability1',((prob1 * 100).toFixed(2)));
-      changeOutputs('fairOdds1', fair1)
+      changeOutputs("fairProbability1", (prob1 * 100).toFixed(2));
+      changeOutputs("fairOdds1", fair1);
     }
-  };
-
-  const validate = (number) => {
-    let display;
-    if (isNaN(number) || !isFinite(number)) {
-      display = "0.00";
-    } else {
-      display = number;
-    }
-    return display;
   };
 
   useEffect(() => {
