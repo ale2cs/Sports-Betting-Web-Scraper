@@ -104,8 +104,7 @@ export default function ListPositiveLines() {
   }, [listening, positiveLines]);
 
   return (
-    <div>
-      <h2 className={styles["title"]}>Current Positive EV Bets</h2>
+    <div className={styles["table-container"]}>
       <table className={styles["content-table"]}>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (

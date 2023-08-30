@@ -1,13 +1,12 @@
-.title {
-  text-align: center;
-  font-size: 32px;
+.table-container {
+  overflow-x: auto;
 }
+
 .content-table {
     border-collapse: collapse;
     margin: 25px auto;
     font-size: 0.9em;
     text-transform: capitalize;
-    min-width: 400px;
     border-radius: 5px 5px 0 0;
     overflow: hidden;
     box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 15px 40px rgba(0, 0, 0, 0.05);

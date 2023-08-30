@@ -1,25 +1,58 @@
-"use client";
-import React, { useState } from 'react';
 import Link from "next/link";
-import styles from "styles/navbar.module.css"
+import styles from "styles/navbar.module.css";
 
 export default function Navbar() {
-    const [isActive, setIsActive] = useState(false);
-
-    const handleClick = () => {
-      setIsActive(!isActive);
-    }
-    return (
-        <div className={styles.navbar}>
-            <Link href="/">Home</Link>
-            <div className={styles['calculators-dropdown']}>
-                <span className={styles['navbar-item']}>Calculators</span>
-                <div className={styles['calculators-menu']}>
-                    <Link href="/betting-calculators/kelly-criterion">Kelly Criterion</Link>
-                    <Link href="/betting-calculators/margin">Margin</Link>
-                    <Link href="/betting-calculators/odds-converter">Odds Converter</Link>
-                </div>
+  return (
+    <header className={styles["main-header"]}>
+      <nav>
+        <ul className={styles.options}>
+          <li className={styles.option}>
+            <Link className={styles.link} href="/">
+              Home
+            </Link>
+          </li>
+          <li className={styles.option}>
+            <div className={styles.dropdown}>
+              <button aria-haspopup="menu">
+                Calculators
+                <span className={styles.arrow}></span>
+              </button>
+              <ul className={styles["dropdown-menu"]}>
+                <li>
+                  <Link
+                    className={styles.link}
+                    href="/betting-calculators/kelly-criterion"
+                  >
+                    Kelly Criterion
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={styles.link}
+                    href="/betting-calculators/margin"
+                  >
+                    Margin
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    className={styles.link}
+                    href="/betting-calculators/odds-converter"
+                  >
+                    Odds Converter
+                  </Link>
+                </li>
+              </ul>
             </div>
-        </div>
-    );
+          </li>
+          <li className={styles.option}>
+            <Link className={styles.link} href="/about">About</Link>
+          </li>
+          <li className={styles.option}>
+            <Link className={styles.link} href="/contact">Contact</Link>
+          </li>
+        </ul>
+      </nav>
+    </header>
+  );
 }

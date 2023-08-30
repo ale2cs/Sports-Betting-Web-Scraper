@@ -1,38 +1,111 @@
-.navbar {
-  text-align: center;
-  margin: 20px 0;
+.main-header {
+  display: flex;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
 }
 
-.calculators-dropdown {
+.main-header nav{
+  margin: auto 0;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.option {
+  display: flex;
+  margin: auto auto;
+  padding: 0.1rem 0.25rem;
+  border-bottom: 2px solid #ffffff;
+}
+
+.option:hover {
+  border-bottom: 2px solid #e0e5ee;
+
+}
+
+.dropdown {
   position: relative;
   display: inline-block;
 }
 
-.calculators-menu {
-  display: none;
+.dropdown button {
+  background: none;
+  border: none;
+  color: #262b44;
+  font-size: 1rem;
+  border: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-family: 'Poppins';
+}
+
+.arrow {
+  margin-left: 0.25rem;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #262b44;
+  transition: transform ease-in-out 0.3s;
+}
+
+.dropdown-menu {
+  left: 50% !important;
+  right: auto !important;
+  text-align: center !important;
+  transform: translate(-50%, 0) !important;
   position: absolute;
-  background-color: white;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  text-align: center;
+  border-radius: 5px;
+  background-color: #ffffff;
+  color: #262b44;
+  min-width: 10rem;
   z-index: 1;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1), 0 15px 30px rgba(0, 0, 0, 0.05);
+  display: none;
+  transform: translateY(-1rem);
+  transition: transform ease 0.3s;
 }
 
-.calculators-menu a {
-  color: black;
-  padding: 12px 16px;
+.dropdown:focus-within .dropdown-menu {
+  transform: translateY(0);
+  display: block;
+}
+
+.dropdown:focus-within button> .arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu li:last-of-type .link {
+  border-radius: 0 0 5px 5px;
+}
+
+.dropdown-menu li .link {
+  padding: 0.25rem 0;
+  border-bottom: 2px solid #ffffff;
+  font-size: 1rem;
+}
+
+.dropdown-menu .link:hover {
+  border-bottom: 2px solid #e0e5ee;
+}
+
+.link {
+  display: block;
   text-decoration: none;
-  display: block;
+  color: #262b44;
+  font-size: 1rem;
 }
 
-.calculators-menu a:hover {
-  color: #ffffff; 
-  background-color: #262b44;
-}
+@media (min-width: 25rem) {
+  .options {
+    display: flex;
+  }
 
-.calculators-dropdown:hover .calculators-menu {
-  display: block;
-}
-
-.navbar-item {
-  padding: 50px;
+  .option {
+    margin: auto 0.25rem;
+  }
 }
