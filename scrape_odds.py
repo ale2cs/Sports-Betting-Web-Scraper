@@ -1,5 +1,6 @@
 import asyncio
 import psycopg2
+from psycopg2.extras import execute_values
 from sqlite3 import Error
 from datetime import datetime
 import time
@@ -32,16 +33,15 @@ async def main():
 
     done = False
     while not done:
-        # add new markets
-        pinacle_markets, pinacle_lines= await get_pinacle()
-        add_markets(conn, pinacle_markets)  #initlaize markets
-        add_lines(conn, pinacle_lines)
+        pinnacle_markets, pinnacle_lines= await get_pinacle()
+        add_markets(conn, pinnacle_markets)  # initlaize markets
+        add_lines(conn, pinnacle_lines)
         bet99 = await get_bet99()
         add_lines(conn, bet99)
         bodog = await get_bodog()
         add_lines(conn, bodog)
-        eights_sport = await get_888sport()
-        add_lines(conn, eights_sport)
+        # eights_sport = await get_888sport()
+        # add_lines(conn, eights_sport)
         sports_interaction = get_sports_interaction()
         add_lines(conn, sports_interaction)
 
@@ -67,8 +67,7 @@ async def main():
             print(market) 
             print((home_away, payout), f"Vig:{stats.vig}%", f"EV:{stats.pos_ev}%", f"Wager:${stats.bet_amount}", f"RemTime:{rem_time(market[3])}")
             print('')
-
-        time.sleep(15)
+        time.sleep(10)
 
 def create_conn():
     conn = None
@@ -118,6 +117,23 @@ def create_tables(conn):
                 ON DELETE CASCADE
         )
     """
+    create_lines2 = """
+        CREATE TABLE IF NOT EXISTS lines (
+            line_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+            market_id INT NOT NULL,
+            sportsbook TEXT NOT NULL,
+            home_odds FLOAT NOT NULL,
+            away_odds FLOAT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TExT NOT NULL,
+            CONSTRAINT unique_line UNIQUE (market_id, sportsbook),
+            CONSTRAINT fk_market_id
+                FOREIGN KEY (market_id)
+                REFERENCES markets(market_id)
+                ON DELETE CASCADE
+        )
+    
+    """
     cur.execute(create_markets)
     cur.execute(create_lines)
     conn.commit()
@@ -142,7 +158,45 @@ def add_markets(conn, markets):
             AND M1.spun = M2.spun
         )
     """
-    cur.executemany(insert, markets)
+    insert2 = """
+        INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
+        VALUES %s
+        ON CONFLICT
+        DO NOTHING
+    """
+    insert3 = """
+        WITH new_markets (sport, league, name, type, period, date, home_team, away_team, spov, spun) AS (
+            VALUES %s
+		),
+		indexed_new_markets AS (
+			SELECT ROW_NUMBER() OVER () AS row_id, I.*
+			FROM new_markets I
+		),
+		duplicates AS (
+			SELECT N.row_id
+			FROM indexed_new_markets N
+            WHERE EXISTS (
+                SELECT 1
+                FROM markets M
+                WHERE N.name = M.name
+                AND N.type = M.type
+                AND N.period = M.period
+                AND N.date = M.date
+                AND N.spov = M.spov
+                AND N.spun = M.spun
+            )
+		),
+		ins AS (
+			SELECT N.*
+			FROM indexed_new_markets AS N
+			LEFT JOIN duplicates AS D ON N.row_id = D.row_id
+			WHERE D.row_id IS NULL
+		)
+		INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
+        SELECT sport, league, name, type, period, date, home_team, away_team, spov, spun
+       	FROM ins
+    """
+    execute_values(cur, insert3, markets)
     conn.commit()
     return cur.lastrowid
 
@@ -193,7 +247,175 @@ def add_lines(conn, lines):
             FROM updated_row
         )
     """
-    cur.executemany(insert, lines)
+    insert2 = """
+        WITH vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
+            VALUES %s 
+        ),
+        recent_lines AS (
+            SELECT Max(line_id) AS line_id
+            	FROM lines
+            	GROUP BY market_id, sportsbook
+        ),
+        upd AS (
+            SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
+            UPDATE lines L
+            SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            FROM vals AS V
+            WHERE L.name = V.name
+            AND L.type = V.type
+            AND L.period = V.period
+            AND L.spov = V.spov
+            AND L.spun = V.spun
+        )
+        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
+        SELECT M.market_id, L.sportsbook, L.home_odds, L.away_odds, 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        FROM markets AS M JOIN ins AS L 
+        ON M.name = L.name
+        AND M.type = L.type
+        AND M.period = L.period
+        AND M.spov = L.spov
+        AND M.spun = L.spun
+        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
+        SELECT V.market_id, V.sportsbook, V.home_odds, V.away_odds, 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+		FROM upd AS U
+        LEFT JOIN proper_vals AS V ON V.market_id = U.market_id
+		WHERE V.market_id IS NULL
+		RETURNING *
+    """
+    insert3 = """
+        WITH vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
+            VALUES %s
+		),
+        recent_lines AS (
+            SELECT Max(line_id) AS line_id
+            FROM lines
+            GROUP BY market_id, sportsbook
+        ),
+		proper_vals AS (
+        	SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
+        	FROM markets AS M JOIN vals AS V
+        	ON M.name = V.name
+        	AND M.type = V.type
+        	AND M.period = V.period
+            AND ABS(EXTRACT(EPOCH FROM AGE(
+            	TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            	TO_TIMESTAMP(V.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            ))) / 3600 < 1
+        	AND M.spov = V.spov
+        	AND M.spun = V.spun
+		),
+		upd AS (
+            UPDATE lines L1
+            SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            FROM recent_lines L2, proper_vals AS P
+            WHERE L1.line_id = L2.line_id
+			AND L1.market_id = P.market_id
+			AND L1.home_odds = P.home_odds::double precision
+            AND L1.away_odds = P.away_odds::double precision 
+			RETURNING P.*
+        ),
+		ins AS (
+			SELECT P.*
+			FROM proper_vals AS P
+			LEFT JOIN upd AS U ON P.market_id = U.market_id
+			WHERE U.market_id IS NULL
+		)
+		INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
+        SELECT I.market_id, I.sportsbook, I.home_odds::double precision, I.away_odds::double precision, 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+		FROM ins I
+    """
+    insert4 = """
+        WITH vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
+            VALUES %s
+		),
+        proper_vals AS (
+        	SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
+        	FROM markets AS M JOIN vals AS V
+        	ON M.name = V.name
+        	AND M.type = V.type
+        	AND M.period = V.period
+            AND ABS(EXTRACT(EPOCH FROM AGE(
+            	TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            	TO_TIMESTAMP(V.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            ))) / 3600 < 1
+        	AND M.spov = V.spov
+        	AND M.spun = V.spun
+		)
+		INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
+        SELECT market_id, sportsbook, home_odds, away_odds,
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+        FROM proper_vals
+        ON CONFLICT (market_id, sportsbook) DO  
+        UPDATE SET 
+            updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+            home_odds = excluded.home_odds,
+            away_odds = excluded.away_odds
+    """
+    insert5 = """
+        CREATE TEMP TABLE vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
+            VALUES %s 
+		);
+        CREATE TEMP TABLE recent_lines AS (
+            SELECT Max(line_id) AS line_id
+            FROM lines
+            GROUP BY market_id, sportsbook
+        );
+		CREATE TEMP TABLE proper_vals AS (
+        	SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
+        	FROM markets AS M JOIN vals AS V
+        	ON M.name = V.name
+        	AND M.type = V.type
+        	AND M.period = V.period
+            AND ABS(EXTRACT(EPOCH FROM AGE(
+            	TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            	TO_TIMESTAMP(V.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            ))) / 3600 < 1
+        	AND M.spov = V.spov
+        	AND M.spun = V.spun
+		);
+		CREATE TEMP TABLE upd AS (
+			WITH up AS (
+            UPDATE lines L1
+            SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+            FROM recent_lines L2, proper_vals AS P
+            WHERE L1.line_id = L2.line_id
+			AND L1.market_id = P.market_id
+			AND L1.home_odds = P.home_odds::double precision
+            AND L1.away_odds = P.away_odds::double precision 
+			RETURNING P.market_id
+			)
+			SELECT *
+			FROM up
+        );
+		CREATE INDEX upd_market_id_idx ON upd (market_id);
+		CREATE TEMP TABLE ins AS (
+			SELECT P.*
+			FROM proper_vals AS P
+			LEFT JOIN upd AS U ON P.market_id = U.market_id
+			WHERE U.market_id IS NULL
+		);
+
+		INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
+        SELECT I.market_id, I.sportsbook, I.home_odds::double precision, I.away_odds::double precision, 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
+		FROM ins I;
+
+		DROP TABLE IF EXISTS vals;
+        DROP TABLE IF EXISTS recent_lines;
+		DROP TABLE IF EXISTS proper_vals;
+		DROP TABLE IF EXISTS upd;
+		DROP TABLE IF EXISTS ins;
+    """
+    # cur.executemany(insert, lines)
+    execute_values(cur, insert5, lines)
     conn.commit()
 
 def positive_ev(conn):

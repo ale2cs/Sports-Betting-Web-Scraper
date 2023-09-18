@@ -43,7 +43,9 @@ async def get_data():
         {"sportids":"76", "champids":"3286"},  # MLB
         {"sportsid":"66", "champids":"4610"},  # MLS
         {"sportids":"67", "champids":"5519"},  # WNBA
-        {"sportids":"76", "champids":"4457"},  # NPB
+        {"sportids":"75", "champids":"3281"},  # NFL
+        {"sportids":"75", "champids":"3284"},  # NCAAF
+        # {"sportids":"76", "champids":"4457"},  # NPB
     ]
     async with httpx.AsyncClient() as client:
         tasks = []
@@ -101,6 +103,8 @@ def parse_matchup(event):
         'BAL':'Baltimore', 'CIN':"Cincinnati", 'KC':'Kansas',
         'OAK':'Oakland', 'SD':'San Diego', 'SF':'San Francisco',
         'TEX':'Texas', 'WAS':'Washington',
+
+        # NFL
     }
     matchup = event['Name']
     home_team, away_team = matchup.split(' vs. ')
@@ -133,8 +137,12 @@ def format_lines(bets, values, bet_type_dict):
             spov = f"{spov[0]}{add_dec(spov[1:])}"
         else:
             spov, spun = add_dec(spov), add_dec(spun)
-        yield ({
-            'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-            'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-            'home_odds':home_odds, 'away_odds':away_odds
-        })
+        #yield ({
+        #    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+        #    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+        #    'home_odds':home_odds, 'away_odds':away_odds
+        #})
+        yield ((
+            matchup, bet_type, period, date, spov, spun, sportsbook, 
+            home_odds, away_odds
+        ))

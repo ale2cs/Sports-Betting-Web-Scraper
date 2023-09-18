@@ -22,8 +22,10 @@ def get_sports_interaction():
         "https://www.sportsinteraction.com/basketball/nba-betting-lines/",
         "https://www.sportsinteraction.com/baseball/mlb-betting-lines/",
         "https://www.sportsinteraction.com/baseball/national-league-betting-lines/",
-        # "https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
         "https://www.sportsinteraction.com/basketball/wnba-betting-lines/",
+        "https://www.sportsinteraction.com/football/nfl-betting-lines/",
+        "https://www.sportsinteraction.com/football/ncaa-betting-lines/",
+        # "https://www.sportsinteraction.com/soccer/canada-us/major-league-soccer-betting/",
         # "https://www.sportsinteraction.com/baseball/japanese-betting-lines/"
     ]
 
@@ -34,7 +36,7 @@ def get_sports_interaction():
 
 
 def scrape_game_urls(sport_urls):
-    game_urls = []
+    game_urls = [] 
 
     with ThreadPoolExecutor() as executor:
         responses = executor.map(scrape, sport_urls)
@@ -50,6 +52,16 @@ def scrape_game_urls(sport_urls):
 
 
 def scrape(url):
+    scraper = cloudscraper.create_scraper(
+        browser={
+            'browser':'firefox', 
+            'mobile':True, 
+            'platform':'android'
+        },
+        delay=10,
+        # ssl_context=ssl._create_unverified_context(),
+    )
+
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0",
         "Accept": "text/html, application/xhtml+xml",
@@ -64,16 +76,6 @@ def scrape(url):
         "Sec-Fetch-Mode": "cors",
         "Sec-Fetch-Site": "same-origin"
     }
-
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser':'firefox', 
-            'mobile':True, 
-            'platform':'android'
-        },
-        delay=10,
-        # ssl_context=ssl._create_unverified_context(),
-    )
     resp = scraper.get(url, headers=headers)
     return resp.json()
 
@@ -158,8 +160,12 @@ def parse_lines(market_data, market_values):
         elif bet_type == 'moneyline':
             spov = spun = ''
 
-        yield ({
-            'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-            'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-            'home_odds':home_odds, 'away_odds':away_odds
-        })
+        #yield ({
+        #    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+        #    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+        #    'home_odds':home_odds, 'away_odds':away_odds
+        #})
+        yield ((
+            matchup, bet_type, period, date, spov, spun, sportsbook, 
+            home_odds, away_odds
+        ))

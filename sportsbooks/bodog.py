@@ -46,9 +46,11 @@ async def get_data():
         'basketball/nba', 
         'baseball/mlb', 
         'soccer/north-america/united-states/mls',
-        'baseball/japan/professional-baseball',
         'basketball/wnba',
-        'soccer/fifa-womens-world-cup/women-s-world-cup-matches',
+        'football/nfl',
+        'football/college-football',
+        # 'baseball/japan/professional-baseball',
+        # 'soccer/fifa-womens-world-cup/women-s-world-cup-matches',
     )
     async with httpx.AsyncClient() as client: 
         tasks = []
@@ -111,17 +113,21 @@ def parse_lines(parsed_markets, market_values, bet_type_dict, period_dict):
             home_odds, away_odds = clean_totals(bet_type, home, away, reversed)
             spov, spun = clean_spreads(bet_type, home, away, reversed)
 
-            yield ({
-                'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-                'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-                'home_odds':home_odds, 'away_odds':away_odds
-            })
+            #yield ({
+            #    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
+            #    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
+            #    'home_odds':home_odds, 'away_odds':away_odds
+            #})
+            yield ((
+                matchup, bet_type, period, date, spov, spun, sportsbook, 
+                home_odds, away_odds
+            ))
 
 
 def clean_totals(bet_type, home, away, reversed):
     home_odds, away_odds = home['decimal'], away['decimal']    
     if bet_type == 'total' or (bet_type == 'spread' and reversed):
-        away_odds, home_odds = home['decimal'], away['decimal']
+        away_odds, home_odds = float(home['decimal']), float(away['decimal'])
     return home_odds, away_odds
 
 
