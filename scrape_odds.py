@@ -117,23 +117,6 @@ def create_tables(conn):
                 ON DELETE CASCADE
         )
     """
-    create_lines2 = """
-        CREATE TABLE IF NOT EXISTS lines (
-            line_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-            market_id INT NOT NULL,
-            sportsbook TEXT NOT NULL,
-            home_odds FLOAT NOT NULL,
-            away_odds FLOAT NOT NULL,
-            created_at TEXT NOT NULL,
-            updated_at TExT NOT NULL,
-            CONSTRAINT unique_line UNIQUE (market_id, sportsbook),
-            CONSTRAINT fk_market_id
-                FOREIGN KEY (market_id)
-                REFERENCES markets(market_id)
-                ON DELETE CASCADE
-        )
-    
-    """
     cur.execute(create_markets)
     cur.execute(create_lines)
     conn.commit()
@@ -142,29 +125,12 @@ def add_markets(conn, markets):
     cur = conn.cursor()
     # https://stackoverflow.com/questions/63720340/postgres-prevent-serial-incrementation-with-on-conflict-do-nothing?noredirect=1&lq=1
     insert = """
-        INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
-        SELECT sport, league, name, type, period, date, home_team, away_team, spov, spun
-        FROM (
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-        ) AS M1 (sport, league, name, type, period, date, home_team, away_team, spov, spun)
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM markets M2
-            WHERE M1.name = M2.name
-            AND M1.type = M2.type
-            AND M1.period = M2.period
-            AND M1.date = M2.date
-            AND M1.spov = M2.spov
-            AND M1.spun = M2.spun
-        )
-    """
-    insert2 = """
-        INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
-        VALUES %s
-        ON CONFLICT
-        DO NOTHING
-    """
-    insert3 = """
+        /* Only insert records that are not in markets. Replaced INSERT ON 
+        CONFLICT IGNORE query since it causes SERIAL/IDENTITY to increment while 
+        attempting to inserting existing records. Scraping frequently causes the
+        primary key to increase rapidly and introduces gaps whiile using INSERT 
+        ON CONFLICT IGNORE. Query being used fixes these problems by only 
+        inserting new records without incrementing SERIAL/IDENTITY.*/
         WITH new_markets (sport, league, name, type, period, date, home_team, away_team, spov, spun) AS (
             VALUES %s
 		),
@@ -196,169 +162,19 @@ def add_markets(conn, markets):
         SELECT sport, league, name, type, period, date, home_team, away_team, spov, spun
        	FROM ins
     """
-    execute_values(cur, insert3, markets)
+    execute_values(cur, insert, markets)
     conn.commit()
     return cur.lastrowid
 
 def add_lines(conn, lines):
     cur = conn.cursor()
-    insert = """
-        WITH market AS (
-            SELECT market_id
-            FROM markets
-            WHERE name = %(matchup)s
-            AND type = %(bet_type)s
-            AND period = %(period)s
-            AND ABS(EXTRACT(EPOCH FROM AGE(
-                TO_TIMESTAMP(date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-                TO_TIMESTAMP(%(date)s, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            ))) / 3600 < 1
-            AND spov = %(spov)s
-            AND spun = %(spun)s
-        ),
-        recent_lines AS (
-            SELECT Max(line_id) AS line_id
-            	FROM lines
-            	GROUP BY market_id, sportsbook
-        ),
-        recent_line AS (
-			SELECT L2.*
-			FROM market M, recent_lines L1
-			JOIN lines AS L2 ON L1.line_id = L2.line_id
-            WHERE L2.market_id = M.market_id 
-            AND L2.sportsbook = %(sportsbook)s
-        ),
-        updated_row AS (
-            UPDATE lines L1
-            SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            FROM recent_line AS L2
-            WHERE L1.line_id = L2.line_id
-            AND L1.home_odds = %(home_odds)s
-            AND L1.away_odds = %(away_odds)s
-            RETURNING *
-        )
-        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
-        SELECT M.market_id, %(sportsbook)s, %(home_odds)s, %(away_odds)s, 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-        FROM market M
-        WHERE NOT EXISTS (
-            SELECT 1
-            FROM updated_row
-        )
-    """
-    insert2 = """
-        WITH vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
-            VALUES %s 
-        ),
-        recent_lines AS (
-            SELECT Max(line_id) AS line_id
-            	FROM lines
-            	GROUP BY market_id, sportsbook
-        ),
-        upd AS (
-            SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
-            UPDATE lines L
-            SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            FROM vals AS V
-            WHERE L.name = V.name
-            AND L.type = V.type
-            AND L.period = V.period
-            AND L.spov = V.spov
-            AND L.spun = V.spun
-        )
-        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
-        SELECT M.market_id, L.sportsbook, L.home_odds, L.away_odds, 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-        FROM markets AS M JOIN ins AS L 
-        ON M.name = L.name
-        AND M.type = L.type
-        AND M.period = L.period
-        AND M.spov = L.spov
-        AND M.spun = L.spun
-        INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
-        SELECT V.market_id, V.sportsbook, V.home_odds, V.away_odds, 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-		FROM upd AS U
-        LEFT JOIN proper_vals AS V ON V.market_id = U.market_id
-		WHERE V.market_id IS NULL
-		RETURNING *
-    """
-    insert3 = """
-        WITH vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
-            VALUES %s
-		),
-        recent_lines AS (
-            SELECT Max(line_id) AS line_id
-            FROM lines
-            GROUP BY market_id, sportsbook
-        ),
-		proper_vals AS (
-        	SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
-        	FROM markets AS M JOIN vals AS V
-        	ON M.name = V.name
-        	AND M.type = V.type
-        	AND M.period = V.period
-            AND ABS(EXTRACT(EPOCH FROM AGE(
-            	TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-            	TO_TIMESTAMP(V.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            ))) / 3600 < 1
-        	AND M.spov = V.spov
-        	AND M.spun = V.spun
-		),
-		upd AS (
-            UPDATE lines L1
-            SET updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            FROM recent_lines L2, proper_vals AS P
-            WHERE L1.line_id = L2.line_id
-			AND L1.market_id = P.market_id
-			AND L1.home_odds = P.home_odds::double precision
-            AND L1.away_odds = P.away_odds::double precision 
-			RETURNING P.*
-        ),
-		ins AS (
-			SELECT P.*
-			FROM proper_vals AS P
-			LEFT JOIN upd AS U ON P.market_id = U.market_id
-			WHERE U.market_id IS NULL
-		)
-		INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
-        SELECT I.market_id, I.sportsbook, I.home_odds::double precision, I.away_odds::double precision, 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-		FROM ins I
-    """
-    insert4 = """
-        WITH vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
-            VALUES %s
-		),
-        proper_vals AS (
-        	SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
-        	FROM markets AS M JOIN vals AS V
-        	ON M.name = V.name
-        	AND M.type = V.type
-        	AND M.period = V.period
-            AND ABS(EXTRACT(EPOCH FROM AGE(
-            	TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-            	TO_TIMESTAMP(V.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-            ))) / 3600 < 1
-        	AND M.spov = V.spov
-        	AND M.spun = V.spun
-		)
-		INSERT INTO lines (market_id, sportsbook, home_odds, away_odds, created_at, updated_at) 
-        SELECT market_id, sportsbook, home_odds, away_odds,
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
-            TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
-        FROM proper_vals
-        ON CONFLICT (market_id, sportsbook) DO  
-        UPDATE SET 
-            updated_at = TO_CHAR(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
-            home_odds = excluded.home_odds,
-            away_odds = excluded.away_odds
-    """
-    insert5 = """
+    upsert = """
+        /*Inserts records when they don't exist in lines or when the odds change 
+        for those lines. If the records do exist in lines but the odds are the 
+        same, the records will be updated on their updated_at columns to the
+        current time. This query is used over a query like INSERT ON CONFLICT
+        DO UPDATE since keeping track of the history of odds for each line is 
+        important.*/
         CREATE TEMP TABLE vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
             VALUES %s 
 		);
@@ -414,8 +230,7 @@ def add_lines(conn, lines):
 		DROP TABLE IF EXISTS upd;
 		DROP TABLE IF EXISTS ins;
     """
-    # cur.executemany(insert, lines)
-    execute_values(cur, insert5, lines)
+    execute_values(cur, upsert, lines)
     conn.commit()
 
 def positive_ev(conn):
