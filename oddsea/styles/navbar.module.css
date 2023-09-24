@@ -36,6 +36,8 @@
   border: none;
   color: #262b44;
   font-size: 1rem;
+  margin: 0;
+  padding: 0;
   border: none;
   display: flex;
   justify-content: space-between;

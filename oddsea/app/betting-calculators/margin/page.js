@@ -4,14 +4,14 @@ import {
   vig,
   noVigOdds,
   impliedProbability,
-  americanToDecimal,
-  fractionalToDecimal,
+  convertOdds,
   validate,
 } from "utils/calculator-utils";
 import calcStyles from "styles/calculators.module.css";
 import marginStyles from "styles/margin.module.css";
 
 export default function Margin() {
+  const [oddsFormat, setOddsFormat] = useState("decimal");
   const [inputs, setInputs] = useState({
     odds1: 0,
     odds2: 0,
@@ -39,21 +39,51 @@ export default function Margin() {
     });
   };
 
+  const changeOddsFormat = (e) => {
+    setOddsFormat(e.target.value);
+  };
+
+  const convertFairOdds = (odds) => {
+    switch (oddsFormat) {
+      case "decimal":
+        return odds;
+      case "american":
+        return convertOdds("decimal-american", odds);
+      case "fractional":
+        return convertOdds("decimal-fractional", odds);
+    }
+  }
+
   const calculate = () => {
-    let odds1 = inputs.odds1;
-    let odds2 = inputs.odds2;
+    let odds1 = null;
+    let odds2 = null;
+    switch (oddsFormat) {
+      case "decimal":
+        odds1 = inputs.odds1;
+        odds2 = inputs.odds2;
+        break;
+      case "american":
+        odds1 = parseFloat(convertOdds("american-decimal", inputs.odds1));
+        odds2 = parseFloat(convertOdds("american-decimal", inputs.odds2));
+        break;
+      case "fraction":
+        odds1 = parseFloat(convertOdds("fraction-decimal", inputs.odds1));
+        odds2 = parseFloat(convertOdds("fraction-decimal", inputs.odds2));
+        break;
+    }
     let [prob1, prob2] = impliedProbability(odds1, odds2);
     let [fair1, fair2] = noVigOdds(odds1, odds2);
+
     changeOutputs("margin", vig(odds1, odds2).toFixed(2));
     changeOutputs("bookmakerProbability1", ((1 / odds1) * 100).toFixed(2));
-    changeOutputs("bookmakerProbability2", ((1 / odds2) * 100).toFixed(2));
+    changeOutputs("bookmakerProbability2", (prob2 * 100).toFixed(2));
     if (prob1 != 0) {
       changeOutputs("fairProbability2", (prob2 * 100).toFixed(2));
-      changeOutputs("fairOdds2", fair2);
+      changeOutputs("fairOdds2", convertFairOdds(fair2));
     }
     if (prob2 != 0) {
       changeOutputs("fairProbability1", (prob1 * 100).toFixed(2));
-      changeOutputs("fairOdds1", fair1);
+      changeOutputs("fairOdds1", convertFairOdds(fair1));
     }
   };
 
@@ -66,7 +96,7 @@ export default function Margin() {
       <header className={calcStyles["calc-head"]}>
         <h1 className={calcStyles["calc-header"]}>Margin Calculator</h1>
         <aside>
-          The Margin Calculator will convert Odds into probability and tell you
+          The Margin Calculator will convert odds into probability and tell you
           how much your bookmaker is charging you.
         </aside>
       </header>
@@ -76,12 +106,16 @@ export default function Margin() {
             <label className={marginStyles["select-format-label"]}>
               Odds Format:
             </label>
-            <select className={marginStyles["select-odds"]}>
-              <option value="">American</option>
-              <option value="" selected>
+            <select
+              value={oddsFormat}
+              className={marginStyles["select-odds"]}
+              onChange={changeOddsFormat}
+            >
+              <option value="american">American</option>
+              <option value="decimal" selected>
                 Decimal
               </option>
-              <option value="">Fractional</option>
+              <option value="fractional">Fractional</option>
             </select>
           </div>
           <form>
@@ -191,6 +225,7 @@ export default function Margin() {
           </div>
         </section>
         <section className={calcStyles["calc-footer"]}>
+          <h2>What is Margin?</h2>
           <p>
             A bookmaker's margin is essentially what they charge you for placing
             a bet. Sharp bettors will be aware of what a margin is and how to
@@ -198,14 +233,12 @@ export default function Margin() {
             the work for you.
           </p>
           <p>
-            <br />
             Bookmakers make profit by inflating the implied probability of an
             outcome, which decreases the odds you receive. The margin, which
             will vary depending on the bookmaker, is the difference between real
             probability and the odds offered by the bookmaker.
           </p>
           <p>
-            <br />
             If you don't know how to work out a bookmaker's margin, using
             Pinnacle's Margin Calculator is the easiest way to calculate the
             probability and margin for any two-way or three-way bet. Compare our

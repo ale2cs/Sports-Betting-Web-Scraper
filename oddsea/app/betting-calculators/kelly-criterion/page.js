@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import calcStyles from "styles/calculators.module.css";
 import kellyStyles from "styles/kelly.module.css";
 import { ev, kellyCriterion, validate } from "utils/calculator-utils";
@@ -41,18 +42,18 @@ export default function KellyCriterion() {
 
     if (odds != 0 && winProbability != 0) {
       changeOutputs("evPercentage", (expectedValue * 100).toFixed(2));
+      changeOutputs("wagerPercentage", (multiplier * kelly * 100).toFixed(2));
     } else {
       changeOutputs("evPercentage", "0.00");
+      changeOutputs("wagerPercentage", "0.00");
     }
     if (expectedValue > 0) {
-      changeOutputs("wagerPercentage", (multiplier * kelly * 100).toFixed(2));
       changeOutputs(
         "evDollar",
         (expectedValue * multiplier * kelly * bankroll).toFixed(2)
       );
       changeOutputs("wagerDollar", (multiplier * kelly * bankroll).toFixed(2));
     } else {
-      changeOutputs("wagerPercentage", "0.00");
       changeOutputs("evDollar", "0.00");
       changeOutputs("wagerDollar", "0.00");
     }
@@ -70,7 +71,7 @@ export default function KellyCriterion() {
         </h1>
         <aside>
           The Kelly Criterion Calculator will calculate the expected value of
-          your bet and tell you how much of your bank roll to wager.
+          your bet and tell you how much to wager.
         </aside>
       </header>
       <main className={calcStyles["main-container"]}>
@@ -82,7 +83,7 @@ export default function KellyCriterion() {
                   <label>Kelly Multiplier</label>
                   <input
                     name="multiplier"
-                    placeholder="Enter Multiplier"
+                    placeholder="0.3"
                     type="string"
                     id="american"
                     onChange={(e) => changeInputs(e)}
@@ -92,7 +93,7 @@ export default function KellyCriterion() {
                   <label>Bankroll</label>
                   <input
                     name="bankroll"
-                    placeholder="Enter Multiplier"
+                    placeholder="5000"
                     type="string"
                     id="american"
                     onChange={(e) => changeInputs(e)}
@@ -102,7 +103,7 @@ export default function KellyCriterion() {
                   <label>Odds</label>
                   <input
                     name="odds"
-                    placeholder="Enter Odds"
+                    placeholder="2.1"
                     type="string"
                     id="decimal"
                     onChange={(e) => changeInputs(e)}
@@ -112,7 +113,7 @@ export default function KellyCriterion() {
                   <label>Win Probability</label>
                   <input
                     name="winProbability"
-                    placeholder="Enter Win Probability"
+                    placeholder="50"
                     type="string"
                     id="fractional"
                     onChange={(e) => changeInputs(e)}
@@ -141,53 +142,78 @@ export default function KellyCriterion() {
           </div>
         </section>
         <section className={calcStyles["calc-footer"]}>
+          <h2>How to Use the Kelly Criterion Calculator</h2>
           <p>
-            A Kelly Criterion sports betting calculator can be used to manage
-            your sports betting bankroll and determine optimal bet sizing. For
-            obvious reasons, if your sports betting bankroll is, say, $5,000,
-            you should not stake it all on one bet, regardless of how great you
-            think the bet is. This is just common sense! Even the best bets lose
-            sometimes, and you don't want your risk of ruin to be too high. You
-            don't want to go broke on one bet.
+            To utilize the Kelly Criterion calculator, input the odds and "fair"
+            win probability of your bet, along with the desired fraction of the
+            Kelly Criterion to apply. The calculator will determine the expected
+            value of the bet and the optimal wager as a percentage of your
+            bankroll. If you wish for the optimal wager amount to be in dollars
+            and determine expected value of that wager in dollars as well, you
+            have the option to enter your bankroll amount.
           </p>
           <p>
-            <br />
-            But what's the optimal bet size? Should you bet 5% of your bankroll
-            or 2.5% on each wager? That's what a Kelly Criterion sports betting
-            calculator tells you. It's a mathematical betting formula that
-            calculates the amount you should stake when there is a discrepancy
-            between the given odds and the “fair” odds.
-          </p>
-          <p>
-            <br />
-            Of course, you should only place wagers when the given odds are
-            superior to the “fair” odds. You don't want to place a bet at +100
-            odds when fair is +103. This would be an example of a negative
-            expected value (e.g. unprofitable) sports bet, and the Kelly
-            Criterion would tell you to stake $0.
-          </p>
-          <p>
-            <br />
-            To use a Kelly Criterion calculator, you need to enter the odds
-            given by the sportsbook, the “fair” win probability of your bet, and
-            the current size of your sports betting bankroll. The Kelly
-            calculator will automatically determine your optimal bet size, and
-            this mathematical formula was designed to help you maximize profit
-            while minimizing risk of ruin. As a general rule of thumb, your
-            total sports betting bankroll should be an amount of money that you
-            are comfortable losing. Most sports bettors start with a bankroll of
-            $5,000 to $25,000.
-          </p>
-          <p>
-            <br />
             You can determine “fair” win probability using the current market
-            odds from the sharpest sportsbook in the world - you know what it
-            is! Simply enter the market into a no vig calculator to determine
-            fair win probability. As an example, imagine the sharpest bookmaker
-            in the world has the New York Mets moneyline odds listed at -104
-            odds. Their opponent is also listed at -104 odds, so both teams have
-            the same moneyline odds. Thus, the “fair” win probability for the
-            Mets would be 50%.
+            odds from the sharpest sportsbooks in the world. Enter the market
+            into our{" "}
+            <Link href="/betting-calculators/margin">Margin Calculator</Link> to
+            determine the fair win probability. As an example, imagine the
+            sharpest bookmaker in the world has the Toronto Raptors moneyline
+            odds listed at 1.95 odds, with their oppenent having the same odds.
+            In this case, both teams have identical moneyline odds, resulting in
+            a "fair" win probability of 50% for the Raptors.
+          </p>
+          <h2>What is the Kelly Criterion?</h2>
+          <p>
+            The Kelly Criterion is a mathematical formula used in betting and
+            investing to determine the optimal size of bets or investments. Its
+            primary objective is to maximize the growth of capital over time
+            while minimizing the risk of ruin. This is achieved by considering
+            the expected value of each bet or investment and their associated
+            risks.
+          </p>
+          <h2>Why Use Kelly Criterion?</h2>
+          <p>
+            Picture this: you've just stumbled upon an exceptional betting
+            opportunity, and you're contemplating of wagering half of bankroll.
+            While you should be inclined to wager more on promising bets, it's
+            important to remember that even the best bets result in losses. You
+            don't want to go broke in a few bets. Perserving your bankroll by
+            properly sizing your bets will ensure your ability to weather
+            unfavorable variance and the Kelly Criterion is the tool.
+          </p>
+          <p>
+            What's the optimal bet size? Is it best to place a consistent $50
+            bet for each wager, or would it be better to allocate a fixed
+            percentage, such as 2.5% of your bankroll? Choosing any of these
+            could work but it doesn't take into account the actual bet. A bet
+            could have a high likehood of winning but this strategy doesn't
+            factor it in. Rather than picking an arbitrary flat value or
+            percentage, the Kelly Criterion will tailor the bet size for each
+            bet by considering the odds and the bet's probability to win.
+          </p>
+          <p>
+            Expected values of bets vary and so should bet sizes to match them.
+            Why opt for a bet a fixed rate, whether its flat or based on
+            percentage, when a bet with an expected value of 3% is higher than
+            one with an expected value of 2%? The higher expected value of a bet
+            , the more advantageous it becomes to stake larger amounts, since
+            potential returns increase. The Kelly Criterion follows this logic
+            of scaling bet sizes proportionally to maximize your ability to
+            profit.
+          </p>
+          <h2>Why Use Fractional Kelly Criterion?</h2>
+          <p>
+            Although the Kelly Criterion is a very useful tool for calculating
+            wager sizes, only a fraction should be considered. It is the Kelly
+            mulitplier input in the calculator. Even the sharpest sportsbooks
+            can't predict everything precisly, possible having errors in their
+            calculations. Taking errors into account it could mean that the
+            "fair" odds we are inputing are a bit off. There is also the odds of
+            a market that are constantly changing and when you place a bet, the
+            "fair" odds can move out of your favor. Where you get burnt the most
+            will be when you over estimate your edge. It is better to be
+            conservitive and use a fraction or multiplier of 0.2-0.3.
           </p>
         </section>
       </main>
