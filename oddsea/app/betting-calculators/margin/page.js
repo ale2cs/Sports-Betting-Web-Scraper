@@ -5,7 +5,8 @@ import {
   noVigOdds,
   impliedProbability,
   convertOdds,
-  validate,
+  validInput,
+  validOutput,
 } from "utils/calculator-utils";
 import calcStyles from "styles/calculators.module.css";
 import marginStyles from "styles/margin.module.css";
@@ -13,8 +14,8 @@ import marginStyles from "styles/margin.module.css";
 export default function Margin() {
   const [oddsFormat, setOddsFormat] = useState("decimal");
   const [inputs, setInputs] = useState({
-    odds1: 0,
-    odds2: 0,
+    odds1: "",
+    odds2: "",
   });
   const [outputs, setOutputs] = useState({
     margin: 0,
@@ -29,7 +30,7 @@ export default function Margin() {
   const changeInputs = (e) => {
     const { name, value } = e.target;
     setInputs((prevValue) => {
-      return { ...prevValue, [name]: parseFloat(value) };
+      return { ...prevValue, [name]: value };
     });
   };
 
@@ -40,7 +41,23 @@ export default function Margin() {
   };
 
   const changeOddsFormat = (e) => {
-    setOddsFormat(e.target.value);
+    const newFormat = e.target.value;
+    const convertType = `${oddsFormat}-${newFormat}`;
+    let odds1 = inputs.odds1;
+    let odds2 = inputs.odds2;
+
+    if (validInput(odds1)) {
+        odds1 = convertOdds(convertType, odds1);
+    }
+    if (validInput(odds2)) {
+        odds2 = convertOdds(convertType, odds2);
+    }
+    setInputs({
+      ...inputs,
+      odds1: odds1,
+      odds2: odds2,
+    });
+    setOddsFormat(newFormat);
   };
 
   const convertFairOdds = (odds) => {
@@ -52,23 +69,27 @@ export default function Margin() {
       case "fractional":
         return convertOdds("decimal-fractional", odds);
     }
-  }
+  };
 
   const calculate = () => {
     let odds1 = null;
     let odds2 = null;
     switch (oddsFormat) {
       case "decimal":
-        odds1 = inputs.odds1;
-        odds2 = inputs.odds2;
+        odds1 = parseFloat(inputs.odds1);
+        odds2 = parseFloat(inputs.odds2);
         break;
       case "american":
-        odds1 = parseFloat(convertOdds("american-decimal", inputs.odds1));
-        odds2 = parseFloat(convertOdds("american-decimal", inputs.odds2));
+        odds1 = parseFloat(
+          convertOdds("american-decimal", parseFloat(inputs.odds1))
+        );
+        odds2 = parseFloat(
+          convertOdds("american-decimal", parseFloat(inputs.odds2))
+        );
         break;
-      case "fraction":
-        odds1 = parseFloat(convertOdds("fraction-decimal", inputs.odds1));
-        odds2 = parseFloat(convertOdds("fraction-decimal", inputs.odds2));
+      case "fractional":
+        odds1 = parseFloat(convertOdds("fractional-decimal", inputs.odds1));
+        odds2 = parseFloat(convertOdds("fractional-decimal", inputs.odds2));
         break;
     }
     let [prob1, prob2] = impliedProbability(odds1, odds2);
@@ -76,7 +97,7 @@ export default function Margin() {
 
     changeOutputs("margin", vig(odds1, odds2).toFixed(2));
     changeOutputs("bookmakerProbability1", ((1 / odds1) * 100).toFixed(2));
-    changeOutputs("bookmakerProbability2", (prob2 * 100).toFixed(2));
+    changeOutputs("bookmakerProbability2", ((1 / odds2) * 100).toFixed(2));
     if (prob1 != 0) {
       changeOutputs("fairProbability2", (prob2 * 100).toFixed(2));
       changeOutputs("fairOdds2", convertFairOdds(fair2));
@@ -144,6 +165,7 @@ export default function Margin() {
                     type="string"
                     id="odds1"
                     onChange={(e) => changeInputs(e)}
+                    value={inputs.odds1}
                   ></input>
                   <div className={marginStyles.outputs}>
                     <div className={marginStyles["outputs-small"]}>
@@ -151,7 +173,7 @@ export default function Margin() {
                         Bookmaker
                       </label>
                       <span className={marginStyles["output-span"]}>
-                        {validate(outputs.bookmakerProbability1)}%
+                        {validOutput(outputs.bookmakerProbability1)}%
                       </span>
                     </div>
                     <div className={marginStyles["outputs-small"]}>
@@ -159,7 +181,7 @@ export default function Margin() {
                         Fair
                       </label>
                       <span className={marginStyles["output-span"]}>
-                        {validate(outputs.fairProbability1)}%
+                        {validOutput(outputs.fairProbability1)}%
                       </span>
                     </div>
                     <div className={marginStyles["outputs-small"]}>
@@ -167,7 +189,7 @@ export default function Margin() {
                         Fair Odds
                       </label>
                       <span className={marginStyles["output-span"]}>
-                        {validate(outputs.fairOdds1)}
+                        {validOutput(outputs.fairOdds1)}
                       </span>
                     </div>
                   </div>
@@ -185,6 +207,7 @@ export default function Margin() {
                     type="string"
                     id="odds2"
                     onChange={(e) => changeInputs(e)}
+                    value={inputs.odds2}
                   ></input>
 
                   <div className={marginStyles.outputs}>
@@ -193,7 +216,7 @@ export default function Margin() {
                         Bookmaker
                       </label>
                       <span className={marginStyles["output-span"]}>
-                        {validate(outputs.bookmakerProbability2)}%
+                        {validOutput(outputs.bookmakerProbability2)}%
                       </span>
                     </div>
                     <div className={marginStyles["outputs-small"]}>
@@ -201,7 +224,7 @@ export default function Margin() {
                         Fair
                       </label>
                       <span className={marginStyles["output-span"]}>
-                        {validate(outputs.fairProbability2)}%
+                        {validOutput(outputs.fairProbability2)}%
                       </span>
                     </div>
                     <div className={marginStyles["outputs-small"]}>
@@ -209,7 +232,7 @@ export default function Margin() {
                         Fair Odds
                       </label>
                       <span className={marginStyles["output-span"]}>
-                        {validate(outputs.fairOdds2)}
+                        {validOutput(outputs.fairOdds2)}
                       </span>
                     </div>
                   </div>
@@ -220,7 +243,7 @@ export default function Margin() {
           <div className={marginStyles.totals}>
             <label className={marginStyles["margin-label"]}>Margin</label>
             <span className={marginStyles["margin-output"]}>
-              {validate(outputs.margin)}%
+              {validOutput(outputs.margin)}%
             </span>
           </div>
         </section>

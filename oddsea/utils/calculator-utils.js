@@ -17,6 +17,7 @@ export const convertOdds = (conversion, odds) => {
   let convertedOdds = null;
   const roundAmerican = 2;
   const roundDecimal = 3;
+  const fractionalOddsPattern = /^(\d+)\/(\d+)$/;
   switch (conversion) {
     case "american-decimal":
       if (odds > 0) {
@@ -51,13 +52,25 @@ export const convertOdds = (conversion, odds) => {
       }
       break;
     case "fractional-decimal":
-      convertedOdds = (odds + 1).toFixed(roundDecimal);
+      if (fractionalOddsPattern.test(odds)) {
+        const [numerator, denominator] = odds.split("/");
+        const decimalValue = parseInt(numerator) / parseInt(denominator);
+        convertedOdds = (decimalValue + 1).toFixed(roundDecimal);
+      } else {
+        convertedOdds = odds;
+      }
       break;
     case "fractional-american":
-      if (odds >= 1) {
-        convertedOdds = `+${(odds * 100).toFixed(roundAmerican)}`;
+      if (fractionalOddsPattern.test(odds)) {
+        const [numerator, denominator] = odds.split("/");
+        const decimalValue = parseInt(numerator) / parseInt(denominator);
+        if (decimalValue >= 1) {
+          convertedOdds = `+${(decimalValue * 100).toFixed(roundAmerican)}`;
+        } else {
+          convertedOdds = (-100 / decimalValue).toFixed(roundAmerican);
+        }
       } else {
-        convertedOdds = (-100 / odds).toFixed(roundAmerican);
+        convertedOdds = odds;
       }
       break;
   }
@@ -117,12 +130,29 @@ export const kellyCriterion = (winProbability, odds) => {
   return winProbability - (1 - winProbability) / (odds - 1);
 };
 
-export const validate = (number) => {
+export const validInput = (input) => {
+  const fractionalOddsPattern = /^(\d+)\/(\d+)$/;
+  if (fractionalOddsPattern.test(input)) {
+    // fractional
+    return true;
+  } else if (!isNaN(input) && isFinite(input) && input != "") {
+    // american and decimal
+    return true;
+  }
+  return false;
+};
+
+export const validOutput = (number) => {
   let display;
-  if (isNaN(number) || !isFinite(number)) {
-    display = "0.00";
-  } else {
+  const fractionalOddsPattern = /^(\d+)\/(\d+)$/;
+  if (fractionalOddsPattern.test(number)) {
+    // fraction
     display = number;
+  } else if (!isNaN(number) && isFinite(number)) {
+    // american and decimal
+    display = number;
+  } else {
+    display = "0.00";
   }
   return display;
 };
