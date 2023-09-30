@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import calcStyles from "styles/calculators.module.css";
 import kellyStyles from "styles/kelly.module.css";
-import { ev, kellyCriterion, validate } from "utils/calculator-utils";
+import { ev, kellyCriterion, validOutput } from "utils/calculator-utils";
 
 export default function KellyCriterion() {
   const [inputs, setInputs] = useState({
@@ -124,7 +124,7 @@ export default function KellyCriterion() {
             <div className={kellyStyles.totals}>
               <div className={kellyStyles.output}>
                 <label>Expected Value %</label>
-                <span>{validate(outputs.evPercentage)}%</span>
+                <span>{validOutput(outputs.evPercentage)}%</span>
               </div>
               <div className={kellyStyles.output}>
                 <label>Wager %</label>
