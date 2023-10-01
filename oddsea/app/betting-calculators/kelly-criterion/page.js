@@ -60,34 +60,30 @@ export default function KellyCriterion() {
     let bankroll = inputs.bankroll;
     let odds = inputs.odds;
     switch (oddsFormat) {
-        case "decimal":
-            odds = parseFloat(odds)
-            break
-        case "american":
-            odds = parseFloat(convertOdds("american-decimal", parseFloat(odds)))
-            break
-        case "fractional":
-            odds = parseFloat(convertOdds("fractional-decimal", odds))
-            break
+      case "decimal":
+        odds = parseFloat(odds);
+        break;
+      case "american":
+        odds = parseFloat(convertOdds("american-decimal", parseFloat(odds)));
+        break;
+      case "fractional":
+        odds = parseFloat(convertOdds("fractional-decimal", odds));
+        break;
     }
     let winProbability = inputs.winProbability;
     let expectedValue = ev(winProbability / 100, odds);
     let kelly = kellyCriterion(winProbability / 100, odds);
 
-    if (odds != 0 && winProbability != 0) {
-      changeOutputs("evPercentage", (expectedValue * 100).toFixed(2));
-      changeOutputs("wagerPercentage", (multiplier * kelly * 100).toFixed(2));
-    } else {
-      changeOutputs("evPercentage", "0.00");
-      changeOutputs("wagerPercentage", "0.00");
-    }
+    changeOutputs("evPercentage", (expectedValue * 100).toFixed(2));
     if (expectedValue > 0) {
+      changeOutputs("wagerPercentage", (multiplier * kelly * 100).toFixed(2));
       changeOutputs(
         "evDollar",
         (expectedValue * multiplier * kelly * bankroll).toFixed(2)
       );
       changeOutputs("wagerDollar", (multiplier * kelly * bankroll).toFixed(2));
     } else {
+      changeOutputs("wagerPercentage", "0.00");
       changeOutputs("evDollar", "0.00");
       changeOutputs("wagerDollar", "0.00");
     }
