@@ -3,13 +3,21 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import calcStyles from "styles/calculators.module.css";
 import kellyStyles from "styles/kelly.module.css";
-import { ev, kellyCriterion, validOutput } from "utils/calculator-utils";
+import oddsFormatStyles from "styles/odds-format.module.css";
+import {
+  ev,
+  kellyCriterion,
+  validInput,
+  validOutput,
+  convertOdds,
+} from "utils/calculator-utils";
 
 export default function KellyCriterion() {
+  const [oddsFormat, setOddsFormat] = useState("decimal");
   const [inputs, setInputs] = useState({
     multiplier: 0,
     bankroll: 0,
-    odds: 0,
+    odds: "",
     winProbability: 0,
   });
   const [outputs, setOutputs] = useState({
@@ -22,7 +30,7 @@ export default function KellyCriterion() {
   const changeInputs = (e) => {
     const { name, value } = e.target;
     setInputs((prevValues) => {
-      return { ...prevValues, [name]: parseFloat(value) };
+      return { ...prevValues, [name]: value };
     });
   };
 
@@ -32,10 +40,36 @@ export default function KellyCriterion() {
     });
   };
 
+  const changeOddsFormat = (e) => {
+    const newFormat = e.target.value;
+    const convertType = `${oddsFormat}-${newFormat}`;
+    let odds = inputs.odds;
+
+    if (validInput(odds)) {
+      odds = convertOdds(convertType, odds);
+    }
+    setInputs({
+      ...inputs,
+      odds: odds,
+    });
+    setOddsFormat(newFormat);
+  };
+
   const calculate = () => {
     let multiplier = inputs.multiplier;
     let bankroll = inputs.bankroll;
     let odds = inputs.odds;
+    switch (oddsFormat) {
+        case "decimal":
+            odds = parseFloat(odds)
+            break
+        case "american":
+            odds = parseFloat(convertOdds("american-decimal", parseFloat(odds)))
+            break
+        case "fractional":
+            odds = parseFloat(convertOdds("fractional-decimal", odds))
+            break
+    }
     let winProbability = inputs.winProbability;
     let expectedValue = ev(winProbability / 100, odds);
     let kelly = kellyCriterion(winProbability / 100, odds);
@@ -76,6 +110,22 @@ export default function KellyCriterion() {
       </header>
       <main className={calcStyles["main-container"]}>
         <section className={calcStyles["calc-content"]}>
+          <div className={oddsFormatStyles.controls}>
+            <label className={oddsFormatStyles["select-format-label"]}>
+              Odds Format:
+            </label>
+            <select
+              value={oddsFormat}
+              className={oddsFormatStyles["select-odds"]}
+              onChange={changeOddsFormat}
+            >
+              <option value="american">American</option>
+              <option value="decimal" selected>
+                Decimal
+              </option>
+              <option value="fractional">Fractional</option>
+            </select>
+          </div>
           <div className={kellyStyles["content"]}>
             <form>
               <ul className={kellyStyles["field"]}>
@@ -107,6 +157,7 @@ export default function KellyCriterion() {
                     type="string"
                     id="decimal"
                     onChange={(e) => changeInputs(e)}
+                    value={inputs.odds}
                   ></input>
                 </li>
                 <li>

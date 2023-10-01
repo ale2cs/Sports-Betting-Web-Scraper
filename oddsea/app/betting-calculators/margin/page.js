@@ -10,6 +10,7 @@ import {
 } from "utils/calculator-utils";
 import calcStyles from "styles/calculators.module.css";
 import marginStyles from "styles/margin.module.css";
+import oddsFormatStyles from "styles/odds-format.module.css";
 
 export default function Margin() {
   const [oddsFormat, setOddsFormat] = useState("decimal");
@@ -123,13 +124,13 @@ export default function Margin() {
       </header>
       <main className={calcStyles["main-container"]}>
         <section className={calcStyles["calc-content"]}>
-          <div className={marginStyles.controls}>
-            <label className={marginStyles["select-format-label"]}>
+          <div className={oddsFormatStyles.controls}>
+            <label className={oddsFormatStyles["select-format-label"]}>
               Odds Format:
             </label>
             <select
               value={oddsFormat}
-              className={marginStyles["select-odds"]}
+              className={oddsFormatStyles["select-odds"]}
               onChange={changeOddsFormat}
             >
               <option value="american">American</option>
