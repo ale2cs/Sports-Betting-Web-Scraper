@@ -4,6 +4,7 @@ import {
   convertOdds,
   oddsToProbability,
   probabilityToOdds,
+  validInput,
 } from "utils/calculator-utils";
 import calcStyles from "styles/calculators.module.css";
 import convertStyles from "styles/odds-converter.module.css";
@@ -15,7 +16,7 @@ export default function OddsConverter() {
   const [probability, setProbability] = useState("");
 
   const changeOdds = (e) => {
-    const {name, value} = e.target;
+    const { name, value } = e.target;
     const num = parseFloat(value);
     if (value == "") {
       setAmerican("");
@@ -37,16 +38,16 @@ export default function OddsConverter() {
           setProbability(oddsToProbability("decimal", num));
           break;
         case "fractional":
-          const fractionalOddsPattern = /^(\d+)\/(\d+)$/;
           setFractional(value);
+          const fractionalOddsPattern = /^(\d+)\/(\d+)$/;
           if (fractionalOddsPattern.test(value)) {
-            const [numerator, denominator] = value.split("/");
-            const decimalValue = parseInt(numerator) / parseInt(denominator);
-            setAmerican(convertOdds("fractional-american", decimalValue));
-            setDecimal(convertOdds("fractional-decimal", decimalValue));
-            setProbability(oddsToProbability("fractional", decimalValue));
+            setAmerican(convertOdds("fractional-american", value));
+            setDecimal(convertOdds("fractional-decimal", value));
+            setProbability(oddsToProbability("fractional", value));
           } else {
+            setAmerican("");
             setDecimal("");
+            setProbability("");
           }
           break;
         case "impliedProbability":
@@ -64,8 +65,8 @@ export default function OddsConverter() {
       <header className={calcStyles["calc-head"]}>
         <h1 className={calcStyles["calc-header"]}>Odds Converter Calculator</h1>
         <aside>
-          Our Odds Converter will convert Decimal odds, American odds and
-          Fractional odds into your chosen odds format.
+          The Odds Converter will convert odds between three most used odds
+          formats in the world and calculate its implied probability.
         </aside>
       </header>
       <main className={calcStyles["main-container"]}>
@@ -122,42 +123,48 @@ export default function OddsConverter() {
           </div>
         </section>
         <section className={calcStyles["calc-footer"]}>
+          <h2>How to Use the Odds Converter Calculator?</h2>
           <p>
-            Like a personal preference for internet browsers, most bettors have
-            their favourite odds format, which is why we have created a handy
-            Odds Converter Calculator. These preferences tend to follow cultural
-            lines. <strong>Fractional</strong> odds dominate in the UK with
-            their roots in betting on horse racing, but they are limited to
-            familiar fractions which became problematic as betting has evolved
-            and moved online.
+            Enter in the proper format into any of the input boxes and it will
+            calculate away! The calculator can also handle inputing the
+            probability of a bet winning and convert it into its odd form.
           </p>
           <p>
-            <br />
-            <strong>Decimal odds</strong> provide a purer translation of odds
-            with greater range - Pinnacle quote to three decimal places and have
-            grown in popularity as betting has moved online. They also lend
-            themselves to digital feeds such as APIs which are how information
-            is shared across the internet.
-          </p>
-          <p>
-            <br />
-            Americans came up with their own way of measuring betting risk -
-            <strong>American odds</strong> - based either on the return of $100
-            (when implied probability is less than 50%) denoted with a +,
+            <strong>American odds</strong> are based either on the return of
+            $100 (when implied probability is less than 50%) denoted with a +,
             whereas when implied probability is greater than 50% the odds are
-            expressed in terms of what you have to bet to win $100 .
+            expressed in terms of the amount to bet to win $100. For example
+            betting $100 on +120 odds, would profit you $120, while betting $100
+            on -120 odds would profit you $83.33.
           </p>
           <p>
-            <br />
-            While it is valuable to understand what betting odds represent and
-            convert between American odds, Decimal odds and Fractional odds in
-            your head, our Odds Converter Calculator conveniently does it all
-            for you.
+            <strong>Decimal odds</strong> represent the return of the amount
+            wagered multiplied by the odds. For example betting $100 on 2.1 odds
+            will return $210 dollars, resulting in a $110 profit.
           </p>
           <p>
-            <br />
-            Convert seamlessly between American, Decimal and Fractional odds and
-            start learning the shortcuts for yourself.
+            <strong>Fractional odds</strong> express the odds as a ratio in the
+            form of a fraction, where numerator represents the potential profit,
+            and the denominator represents the amount to state. For instance,
+            betting $100 on 1/2 odds will yield a total return of $150,
+            resulting in a profit of $50.
+          </p>
+          <h2>Why are there Different Odds Formats?</h2>
+          <p>
+            Odds formats are like different lanagues spoken aroud the world.
+            Just as people from different regions use various langauges to
+            communicate, sports bettors from different areas use distinct odds
+            formats. Often, a bettor's preference for an odds format is due to
+            what is commonly offered in their region. Fractional odds are
+            predominantly used in the United Kingdom, american odds in North
+            America, and decimal odds in places in Europe and Australasia.
+          </p>
+          <p>
+            Sportsbooks may only offer one type of odds format making it
+            valuable to understand what betting odds represent. Converting
+            between American odds, Decimal odds and Fractional odds in your head
+            can be difficult so you can use the Odds Converter Calculator as
+            tool to help you out. 
           </p>
         </section>
       </main>

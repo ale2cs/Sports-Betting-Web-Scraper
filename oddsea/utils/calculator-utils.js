@@ -80,6 +80,7 @@ export const convertOdds = (conversion, odds) => {
 export const oddsToProbability = (format, odds) => {
   let probability = null;
   const round = 2;
+  const fractionalOddsPattern = /^(\d+)\/(\d+)$/;
   switch (format) {
     case "american":
       if (odds > 0) {
@@ -92,7 +93,11 @@ export const oddsToProbability = (format, odds) => {
       probability = (1 / odds) * 100;
       break;
     case "fractional":
-      probability = (1 / (odds + 1)) * 100;
+      if (fractionalOddsPattern.test(odds)) {
+        const [numerator, denominator] = odds.split("/");
+        const decimalValue = parseInt(numerator) / parseInt(denominator);
+        probability = (1 / (decimalValue + 1)) * 100;
+      }
       break;
   }
   return probability.toFixed(round);
