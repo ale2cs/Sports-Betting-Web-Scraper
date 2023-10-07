@@ -232,35 +232,38 @@ export default function KellyCriterion() {
           <p>
             What's the optimal bet size? Is it best to place a consistent $50
             bet for each wager, or would it be better to allocate a fixed
-            percentage, such as 2.5% of your bankroll? Choosing any of these
-            could work but it doesn't take into account the actual bet. A bet
-            could have a high likehood of winning but this strategy doesn't
-            factor it in. Rather than picking an arbitrary flat value or
-            percentage, the Kelly Criterion will tailor the bet size for each
-            bet by considering the odds and the bet's probability to win.
+            percentage, such as 2.5% of your bankroll? Selecting any of these
+            methods could work but it doesn't take into account the actual bet.
+            A bet could have a high likehood of winning but this strategy
+            doesn't factor it in. Rather than selecting an arbitrary flat value
+            or percentage, the Kelly Criterion tailors the bet size for each bet
+            by considering the odds and the bet's probability to win.
           </p>
           <p>
-            Expected values of bets vary and so should bet sizes to match them.
-            Why opt for a bet a fixed rate, whether its flat or based on
-            percentage, when a bet with an expected value of 3% is higher than
-            one with an expected value of 2%? The higher expected value of a bet
-            , the more advantageous it becomes to stake larger amounts, since
-            potential returns increase. The Kelly Criterion follows this logic
-            of scaling bet sizes proportionally to maximize your ability to
-            profit.
+            Expected values of bets vary, and therefore, bet sizes should also
+            vary to match them. Why opt for a bet a fixed rate, whether its flat
+            or based on percentage, when a bet with an expected value of 3% is
+            higher than one with an expected value of 2%? The higher expected
+            value of a bet, the more advantageous it becomes to stake larger
+            amounts, since potential returns increase. The Kelly Criterion
+            follows this logic of scaling bet sizes proportionally to maximize
+            profits.
           </p>
           <h2>Why Use Fractional Kelly Criterion?</h2>
           <p>
-            Although the Kelly Criterion is a very useful tool for calculating
-            wager sizes, only a fraction should be considered. It is the Kelly
-            mulitplier input in the calculator. Even the sharpest sportsbooks
-            can't predict everything precisly, possible having errors in their
-            calculations. Taking errors into account it could mean that the
-            "fair" odds we are inputing are a bit off. There is also the odds of
-            a market that are constantly changing and when you place a bet, the
-            "fair" odds can move out of your favor. Where you get burnt the most
-            will be when you over estimate your edge. It is better to be
-            conservitive and use a fraction or multiplier of 0.2-0.3.
+            While the Kelly Criterion is an invaluable tool for determining
+            optimal wager sizes, it's essential to be cautious when considering
+            its recommendations. The key factor to bear in mind is the Kelly
+            multiplier, which you input into the calculator. Even the sharpest
+            sportsbooks are susceptible to inaccuracies in their predictions,
+            occasionally introducing errors into their calculations. These
+            errors can potentially skew the "fair" odds used in Kelly Criterion
+            calculations. Moreover, market odds are in a constant state of flux,
+            and by the time you place a bet, the initially calculated "fair"
+            odds may no longer be in your favor. The greatest risk lies in
+            overestimating your edge. To mitigate this, it's advisable to adopt
+            a more conservative approach, opting for a fraction in the range of
+            0.2 to 0.3.
           </p>
         </section>
       </main>
