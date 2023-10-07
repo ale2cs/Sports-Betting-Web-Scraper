@@ -33,17 +33,17 @@ async def main():
 
     done = False
     while not done:
-        pinnacle_markets, pinnacle_lines= await get_pinacle()
+        pinnacle_markets, pinnacle_lines = await get_pinacle()
         add_markets(conn, pinnacle_markets)  # initlaize markets
         add_lines(conn, pinnacle_lines)
         bet99 = await get_bet99()
         add_lines(conn, bet99)
         bodog = await get_bodog()
         add_lines(conn, bodog)
+        # sports_interaction = get_sports_interaction()
+        # add_lines(conn, sports_interaction)
         # eights_sport = await get_888sport()
         # add_lines(conn, eights_sport)
-        sports_interaction = get_sports_interaction()
-        add_lines(conn, sports_interaction)
 
         current_time = datetime.now()
         time_format = "%H:%M:%S"  # Example format: HH:MM:SS
@@ -67,7 +67,7 @@ async def main():
             print(market) 
             print((home_away, payout), f"Vig:{stats.vig}%", f"EV:{stats.pos_ev}%", f"Wager:${stats.bet_amount}", f"RemTime:{rem_time(market[3])}")
             print('')
-        time.sleep(10)
+        time.sleep(20)
 
 def create_conn():
     conn = None

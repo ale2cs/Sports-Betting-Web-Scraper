@@ -2,6 +2,16 @@ import cloudscraper
 from concurrent.futures import ThreadPoolExecutor
 from utils.calcs import rnd_dec
 
+scraper = cloudscraper.CloudScraper(
+    browser={
+        'browser':'firefox', 
+        'mobile':True, 
+        'platform':'android'
+    },
+    # delay=10,
+    # ssl_context=ssl._create_unverified_context(),
+)
+
 def get_sports_interaction():
     # Scrapes Sports Interaction and returns lines
     bet_type_dict = {
@@ -52,16 +62,6 @@ def scrape_game_urls(sport_urls):
 
 
 def scrape(url):
-    scraper = cloudscraper.create_scraper(
-        browser={
-            'browser':'firefox', 
-            'mobile':True, 
-            'platform':'android'
-        },
-        delay=10,
-        # ssl_context=ssl._create_unverified_context(),
-    )
-
     headers = {
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/115.0",
         "Accept": "text/html, application/xhtml+xml",
@@ -87,7 +87,7 @@ def valid_game_name(game_name):
 
 
 def scrape_game_data(game_urls):
-    with ThreadPoolExecutor() as executor:
+    with ThreadPoolExecutor(max_workers=100) as executor:
         responses = executor.map(scrape, game_urls)
     return responses
 
@@ -129,9 +129,10 @@ def clean_matchup(matchup):
 
 def parse_markets(data, bet_type_dict):
     markets = []
-    for market in data['gameData']['betTypeGroups']:
-        if market['betTypeId'] in bet_type_dict:
-            markets.append(market)
+    if 'betTypeGroups' in data['gameData']:
+        for market in data['gameData']['betTypeGroups']:
+            if market['betTypeId'] in bet_type_dict:
+                markets.append(market)
     return markets
 
 
