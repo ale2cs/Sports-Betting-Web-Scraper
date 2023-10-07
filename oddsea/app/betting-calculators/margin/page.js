@@ -48,10 +48,10 @@ export default function Margin() {
     let odds2 = inputs.odds2;
 
     if (validInput(odds1)) {
-        odds1 = convertOdds(convertType, odds1);
+      odds1 = convertOdds(convertType, odds1);
     }
     if (validInput(odds2)) {
-        odds2 = convertOdds(convertType, odds2);
+      odds2 = convertOdds(convertType, odds2);
     }
     setInputs({
       ...inputs,
@@ -118,8 +118,8 @@ export default function Margin() {
       <header className={calcStyles["calc-head"]}>
         <h1 className={calcStyles["calc-header"]}>Margin Calculator</h1>
         <aside>
-          The Margin Calculator will convert odds into probability and tell you
-          how much your bookmaker is charging you.
+          The Margin Calculator will convert odds into probabilities and
+          caclulate the amount a bookmaker is charging for a particular bet.
         </aside>
       </header>
       <main className={calcStyles["main-container"]}>
@@ -249,25 +249,88 @@ export default function Margin() {
           </div>
         </section>
         <section className={calcStyles["calc-footer"]}>
+          <h2>How to Use the Margin Calculator?</h2>
+          <p>
+            The Margin Calculator serves multiple purposes: it helps you
+            determine the margin of a particular bet, uncover the implied
+            probability set by the bookmaker's odds, and reveal the actual
+            probabilities of winning each bet. Designed for two-way bets, simply
+            enter in an odds pair of a betting line from a sportsbook, and let
+            the calculator do the work.{" "}
+          </p>
+          <p>
+            For instance, if you are planning to bet on the Edmonton Oilers
+            moneyline, enter the Oilers odds to win as the first odds and the
+            oponent's odds as the second.{" "}
+          </p>
+          <p>
+            The <strong>'Bookmaker'</strong> column displays the implied
+            probabilites of te odds provided by the bookmaker. It is the implied
+            probabilities with margin priced in. When the sum of probabilities
+            of the two outcomes exceeds 100%, it implies the margin is greater
+            than zero.
+          </p>
+          <p>
+            In the <strong>'Fair'</strong> column you will find the fair
+            probabilities of each outcome of a bet, representing the true
+            probabilities of each outcome of a bet after the margin has been
+            removed. These percentages can be used as the real probabilities of
+            the outcomes if the bookmaker is sharp.
+          </p>
+          <p>
+            The <strong>'Fair Odds'</strong> column reveals the 'no-vig odds'
+            that the bookermaker should offer if they did not include any
+            margin. When a bookmaker is sharp, finding better odds than the
+            'no-vig odds' from sharp bookmaker will result in a postive expected
+            value bet.
+          </p>
           <h2>What is Margin?</h2>
           <p>
-            A bookmaker's margin is essentially what they charge you for placing
-            a bet. Sharp bettors will be aware of what a margin is and how to
-            work it out but for those that don't, our Margin Calculator will do
-            the work for you.
+            Margin, often referred to as 'vig' (short for vigorish), represents
+            the fee imposed by bookmakers when you place a bet. In essence, it
+            is the price you pay for sports betting. At their core, sportsbooks
+            are businesses, and for sportsbooks to operate profitably, they
+            intentionally offer odds that are less favorable than the true odds.
+            This means they exaggerate the implied probability of an outcome,
+            resulting in reduced payouts for bettors. By applying this strategy
+            to both sides of a bet, bookmakers ensure their ability to generate
+            profits regardless of the bet's outcome. It's a fundamental aspect
+            of the sports betting industry that allows sportsbooks to be
+            profitable.
+          </p>
+          <h2>Why is Margin Important?</h2>
+          <p>
+            Understanding margin is key to identifying sportsbooks confidence on
+            the bets they offer. In general, sportsbooks with lower margins tend
+            to be sharper, offering more accurate odds. Lower margins indicate
+            their confidence in the odds they provide while still ensuring
+            profitability. As an event's start time approaches, margins
+            naturally decrease as sportsbooks grow more assured of the true
+            odds.
           </p>
           <p>
-            Bookmakers make profit by inflating the implied probability of an
-            outcome, which decreases the odds you receive. The margin, which
-            will vary depending on the bookmaker, is the difference between real
-            probability and the odds offered by the bookmaker.
+            Following the principle that sharper sportsbooks generally offer
+            more accurate odds and recognizing that sportsbooks lower their
+            margins as their confidence in their lines increases, we can use the
+            odds they provide as a basis for determining fair odds and
+            probabilities when the event is close to starting.
           </p>
           <p>
-            If you don't know how to work out a bookmaker's margin, using
-            Pinnacle's Margin Calculator is the easiest way to calculate the
-            probability and margin for any two-way or three-way bet. Compare our
-            margins to other bookmakers and understand why serious bettors bet
-            with Pinnacle.
+            Margins can fluctuate based on various factors, including the sport,
+            league, type of bet, and time remaining until the event starts. Even
+            with the same sportsbook, margins can exhibit significant
+            variations. For instance, popular sports leagues like the NBA
+            typically have lower margins compared to the WNBA. This discrepancy
+            arises from the higher transaction volume and increased analytical
+            efforts invested in determining true odds for more prominent
+            leagues.
+          </p>
+          <p>
+            In general, lower margins can be indicative of higher confidence in
+            a bet's accuracy, allowing us to use them as a reference for the
+            best guess of the true odds, often referred to as 'no-vig odds.'
+            Betting on markets with lower margins enhances our confidence when
+            identifying a edge.
           </p>
         </section>
       </main>
