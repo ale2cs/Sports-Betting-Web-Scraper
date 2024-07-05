@@ -33,24 +33,24 @@ async def main():
 
     done = False
     while not done:
-        pinnacle_markets, pinnacle_lines = await get_pinacle()
+        pinnacle_games, pinnacle_markets, pinnacle_lines = await get_pinacle()
+        add_games(conn, pinnacle_games)  # initalize games
         add_markets(conn, pinnacle_markets)  # initlaize markets
         add_lines(conn, pinnacle_lines)
-        bet99 = await get_bet99()
-        add_lines(conn, bet99)
-        bodog = await get_bodog()
-        add_lines(conn, bodog)
-        # sports_interaction = get_sports_interaction()
-        # add_lines(conn, sports_interaction)
+        #bet99 = await get_bet99()
+        #add_lines(conn, bet99)
+        # bodog = await get_bodog()
+        # add_lines(conn, bodog)
+        #sports_interaction = get_sports_interaction()
+        #add_lines(conn, sports_interaction)
         # eights_sport = await get_888sport()
         # add_lines(conn, eights_sport)
 
         current_time = datetime.now()
         time_format = "%H:%M:%S"  # Example format: HH:MM:SS
         formatted_time = current_time.strftime(time_format)
-        clear_terminal()
+        # clear_terminal()
         print(f"---------- {formatted_time} ----------\n")
-
         for market in positive_ev(conn):
             if over_max_hours(market[3], 2):
                 continue
@@ -67,7 +67,8 @@ async def main():
             print(market) 
             print((home_away, payout), f"Vig:{stats.vig}%", f"EV:{stats.pos_ev}%", f"Wager:${stats.bet_amount}", f"RemTime:{rem_time(market[3])}")
             print('')
-        time.sleep(20)
+        break
+        time.sleep(60)
 
 def create_conn():
     conn = None
@@ -86,20 +87,31 @@ def create_conn():
 
 def create_tables(conn):
     cur = conn.cursor()
-    create_markets = """
-        CREATE TABLE IF NOT EXISTS markets (
-            market_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, 
+    create_games = """
+        CREATE TABLE IF NOT EXISTS games (
+            game_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
             sport TEXT NOT NULL,
             league TEXT NOT NULL,
             name TEXT NOT NULL, 
-            type TEXT NOT NULL,
-            period SMALLINT NOT NULL, 
             date TEXT NOT NULL, 
             home_team TEXT NOT NULL, 
             away_team TEXT NOT NULL, 
+            CONSTRAINT unique_game UNIQUE (sport, league, name, date, home_team, away_team)
+        );
+    """
+    create_markets = """
+        CREATE TABLE IF NOT EXISTS markets (
+            market_id INT PRIMARY KEY GENERATED ALWAYS AS IDENTITY, 
+            game_id INT NOT NULL,
+            type TEXT NOT NULL,
+            period SMALLINT NOT NULL, 
             spov TEXT NOT NULL, 
             spun TEXT NOT NULL,
-            CONSTRAINT unique_market UNIQUE (name, type, period, date, spov, spun)
+            CONSTRAINT fk_game_id
+                FOREIGN KEY (game_id)
+                REFERENCES games(game_id)
+                ON DELETE CASCADE,
+            CONSTRAINT unique_market UNIQUE (game_id, type, period, spov, spun)
         )
     """
     create_lines = """
@@ -117,9 +129,56 @@ def create_tables(conn):
                 ON DELETE CASCADE
         )
     """
+    cur.execute(create_games)
     cur.execute(create_markets)
     cur.execute(create_lines)
     conn.commit()
+
+
+def add_games(conn, games):
+    cur = conn.cursor()
+    # https://stackoverflow.com/questions/63720340/postgres-prevent-serial-incrementation-with-on-conflict-do-nothing?noredirect=1&lq=1
+    insert = """
+        /* Only insert records that are not in games. Replaced INSERT ON 
+        CONFLICT IGNORE query since it causes SERIAL/IDENTITY to increment while 
+        attempting to inserting existing records. Scraping frequently causes the
+        primary key to increase rapidly and introduces gaps whiile using INSERT 
+        ON CONFLICT IGNORE. Query being used fixes these problems by only 
+        inserting new records without incrementing SERIAL/IDENTITY.*/
+        WITH new_games (sport, league, name, date, home_team, away_team) AS (
+            VALUES %s
+		),
+		indexed_new_games AS (
+			SELECT ROW_NUMBER() OVER () AS row_id, I.*
+			FROM new_games I
+		),
+		duplicates AS (
+			SELECT N.row_id
+			FROM indexed_new_games N
+            WHERE EXISTS (
+                SELECT 1
+                FROM games G
+                WHERE N.name = G.name
+                AND N.sport = G.sport
+                AND N.league = G.league
+                AND N.date = G.date
+                AND N.home_team = G.home_team
+                AND N.away_team = G.away_team
+            )
+		),
+		ins AS (
+			SELECT N.*
+			FROM indexed_new_games AS N
+			LEFT JOIN duplicates AS D ON N.row_id = D.row_id
+			WHERE D.row_id IS NULL
+		)
+		INSERT INTO games (sport, league, name, date, home_team, away_team)
+        SELECT DISTINCT sport, league, name, date, home_team, away_team
+       	FROM ins
+    """
+    execute_values(cur, insert, games)
+    conn.commit()
+    return cur.lastrowid
 
 def add_markets(conn, markets):
     cur = conn.cursor()
@@ -143,11 +202,14 @@ def add_markets(conn, markets):
 			FROM indexed_new_markets N
             WHERE EXISTS (
                 SELECT 1
-                FROM markets M
-                WHERE N.name = M.name
+                FROM games AS G
+                JOIN markets AS M ON G.game_id = M.game_id     
+                WHERE N.name = G.name
                 AND N.type = M.type
                 AND N.period = M.period
-                AND N.date = M.date
+                AND N.date = G.date
+                AND N.sport = G.sport
+                AND N.league = G.league
                 AND N.spov = M.spov
                 AND N.spun = M.spun
             )
@@ -158,9 +220,17 @@ def add_markets(conn, markets):
 			LEFT JOIN duplicates AS D ON N.row_id = D.row_id
 			WHERE D.row_id IS NULL
 		)
-		INSERT INTO markets (sport, league, name, type, period, date, home_team, away_team, spov, spun)
-        SELECT sport, league, name, type, period, date, home_team, away_team, spov, spun
-       	FROM ins
+        INSERT INTO markets (game_id, type, period, spov, spun)
+        SELECT
+            (SELECT game_id 
+            FROM games AS G
+            WHERE G.name = I.name 
+            AND G.sport = I.sport 
+            AND G.league = I.league 
+            AND G.date = I.date
+            ), 
+            I.type, I.period, I.spov, I.spun
+        FROM ins AS I;
     """
     execute_values(cur, insert, markets)
     conn.commit()
@@ -175,7 +245,7 @@ def add_lines(conn, lines):
         current time. This query is used over a query like INSERT ON CONFLICT
         DO UPDATE since keeping track of the history of odds for each line is 
         important.*/
-        CREATE TEMP TABLE vals (name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
+        CREATE TEMP TABLE vals (sport, league, name, type, period, date, spov, spun, sportsbook, home_odds, away_odds) AS (
             VALUES %s 
 		);
         CREATE TEMP TABLE recent_lines AS (
@@ -185,12 +255,15 @@ def add_lines(conn, lines):
         );
 		CREATE TEMP TABLE proper_vals AS (
         	SELECT M.market_id, V.sportsbook, V.home_odds, V.away_odds
-        	FROM markets AS M JOIN vals AS V
-        	ON M.name = V.name
-        	AND M.type = V.type
+        	FROM games AS G
+            JOIN vals AS V ON G.name = V.name
+            JOIN markets AS M ON G.game_id = M.game_id
+            WHERE G.sport = V.sport
+            AND G.league = V.league
+            AND M.type = V.type
         	AND M.period = V.period
             AND ABS(EXTRACT(EPOCH FROM AGE(
-            	TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
+            	TO_TIMESTAMP(G.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'), 
             	TO_TIMESTAMP(V.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"')
             ))) / 3600 < 1
         	AND M.spov = V.spov
@@ -248,17 +321,18 @@ def positive_ev(conn):
 			JOIN lines AS L2
 			ON L1.line_id = L2.line_id
         )
-        SELECT M.name, M.type, M.period, M.date, M.spov, M.spun, M.home_team, M.away_team,
+        SELECT G.name, M.type, M.period, G.date, M.spov, M.spun, G.home_team, G.away_team,
             L1.sportsbook, L1.home_odds, L1.away_odds,
             L2.sportsbook AS sportsbook_2, L2.home_odds AS home_odds_2, L2.away_odds AS away_odds_2
         FROM recent_line AS L1
         JOIN recent_line AS L2 ON L1.market_id = L2.market_id 
         JOIN markets AS M ON L1.market_id = M.market_id
+        JOIN games AS G ON G.game_id = M.game_id
         WHERE L1.sportsbook = 'Pinnacle'
         AND L1.sportsbook <> L2.sportsbook
         AND (L2.home_odds > ((L1.home_odds + L1.away_odds) / L1.away_odds)
             OR L2.away_odds > ((L1.home_odds + L1.away_odds) / L1.home_odds))
-        AND TO_TIMESTAMP(M.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() AT TIME ZONE 'UTC'
+        AND TO_TIMESTAMP(G.date, 'YYYY-MM-DD"T"HH24:MI:SS"Z"') > NOW() AT TIME ZONE 'UTC'
     """
     cur = conn.cursor()
     cur.execute(positive_ev)

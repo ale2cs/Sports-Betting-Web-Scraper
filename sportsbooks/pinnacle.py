@@ -3,6 +3,7 @@ import httpx
 from utils.calcs import american_to_decimal
 
 async def get_pinacle():
+    games_to_add = []
     markets = []
     lines = []
     bet_type_dict = {'moneyline':0, 'total':1, 'spread':2}  # Desired markets
@@ -11,10 +12,11 @@ async def get_pinacle():
     for sport, prices in zip(games, values):
         for market_values in parse_market_values(sport):
             market_data = parse_markets(prices, market_values['game_id'], bet_type_dict)
-            for parsed_markets, parsed_lines in parse_market_data(market_data, market_values):
+            for parsed_games, parsed_markets, parsed_lines in parse_market_data(market_data, market_values):
+                games_to_add.append(parsed_games)
                 markets.append(parsed_markets)
                 lines.append(parsed_lines)
-    return markets, lines
+    return games_to_add, markets, lines
 
 
 async def get_data():
@@ -131,16 +133,14 @@ def parse_market_data(market_data, market_values):
         else:
             spov = spun = ''
         yield ((
+            sport, league, matchup, date, home_team, away_team
+        ),
+        (
             sport, league, matchup, bet_type, period, date, home_team, 
             away_team, spov, spun
         ),
-        # ({
-        #    'matchup':matchup, 'bet_type':bet_type, 'period':period, 
-        #    'date':date, 'spov':spov, 'spun':spun, 'sportsbook':sportsbook, 
-        #    'home_odds':home_odds, 'away_odds':away_odds
-        #}))
         ((
-            matchup, bet_type, period, date, spov, spun, sportsbook, home_odds, away_odds
+            sport, league, matchup, bet_type, period, date, spov, spun, sportsbook, home_odds, away_odds
         )))
 
 asyncio.run(get_pinacle())
