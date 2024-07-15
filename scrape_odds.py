@@ -37,12 +37,12 @@ async def main():
         add_games(conn, pinnacle_games)  # initalize games
         add_markets(conn, pinnacle_markets)  # initlaize markets
         add_lines(conn, pinnacle_lines)
-        #bet99 = await get_bet99()
-        #add_lines(conn, bet99)
-        # bodog = await get_bodog()
-        # add_lines(conn, bodog)
-        #sports_interaction = get_sports_interaction()
-        #add_lines(conn, sports_interaction)
+        bodog_lines = await get_bodog()
+        add_lines(conn, bodog_lines)
+        sports_interaction_lines = await get_sports_interaction()
+        add_lines(conn, sports_interaction_lines)
+        # bet99 = await get_bet99()
+        # add_lines(conn, bet99)
         # eights_sport = await get_888sport()
         # add_lines(conn, eights_sport)
 
@@ -67,8 +67,9 @@ async def main():
             print(market) 
             print((home_away, payout), f"Vig:{stats.vig}%", f"EV:{stats.pos_ev}%", f"Wager:${stats.bet_amount}", f"RemTime:{rem_time(market[3])}")
             print('')
-        break
-        time.sleep(60)
+        done = True
+        if not done:
+            time.sleep(60)
 
 def create_conn():
     conn = None
