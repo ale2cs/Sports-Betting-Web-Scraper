@@ -22,7 +22,7 @@ async def get_bodog():
     lines = []
     responses = await get_data()
 
-    for data in responses: 
+    for data, sport, league_name in responses: 
         if not data:
             continue
         events = data[0]['events']
@@ -34,6 +34,8 @@ async def get_bodog():
             market_values['reverse'] = reverse
             market_values['matchup'] = cleaned_matchup
             market_values['date'] = epoch_to_iso(event['startTime'] / 1000)
+            market_values['sport'] = sport
+            market_values['league'] = league_name
             parsed_markets = parse_markets(event, bet_type_dict, period_dict)
             for line in parse_lines(parsed_markets, market_values, bet_type_dict, period_dict):
                 lines.append(line)
@@ -42,26 +44,26 @@ async def get_bodog():
 
 async def get_data():
     leagues = (
-        'hockey/nhl', 
-        'basketball/nba', 
-        'baseball/mlb', 
-        'soccer/north-america/united-states/mls',
-        'basketball/wnba',
-        'football/nfl',
-        'football/college-football',
+        ('hockey/nhl', 'Hockey', 'NHL'), 
+        ('basketball/nba', 'Basketball', 'NBA'), 
+        ('baseball/mlb', 'Baseball', 'MLB'), 
+        ('soccer/north-america/united-states/mls', 'Soccer', 'MLS'),
+        ('basketball/wnba', 'Basketball', 'WNBA'),
+        ('football/nfl', 'Football', 'NFL'),
+        # 'football/college-football',
         # 'baseball/japan/professional-baseball',
         # 'soccer/fifa-womens-world-cup/women-s-world-cup-matches',
     )
     async with httpx.AsyncClient() as client: 
         tasks = []
-        for league in leagues:
+        for league, sport, league_name in leagues:
             url = f"https://www.bodog.eu/services/sports/event/coupon/events/A/description/{league}"
-            tasks.append(asyncio.ensure_future(make_request(client, url)))
+            tasks.append(asyncio.ensure_future(make_request(client, url, sport, league_name)))
         responses = await asyncio.gather(*tasks) 
     return responses
 
 
-async def make_request(client, url):
+async def make_request(client, url, sport, league_name):
     headers = {
         "cookie": "TS014505a4=014b5d5d074621dcb805603f6ecd400ce1005af41531ed96e612911b0ac1d43907fae8b6e0d8487c332e76c9c3ce7978a0e89cfbdf",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0",
@@ -71,7 +73,7 @@ async def make_request(client, url):
     }
     query = {"preMatchOnly":"true"}
     resp = await client.get(url, headers=headers, params=query, timeout=15)
-    return resp.json()
+    return (resp.json(), sport, league_name)
 
 
 def clean_matchup(matchup):
@@ -98,7 +100,7 @@ def parse_markets(event, bet_type_dict, period_dict):
 
 def parse_lines(parsed_markets, market_values, bet_type_dict, period_dict):
     sportsbook = "Bodog"
-    reversed, matchup, date =  market_values.values()
+    reversed, matchup, date, sport, league =  market_values.values()
     for market in parsed_markets:
         bet_type = bet_type_dict[market['description']]
         period = period_dict[market['period']['abbreviation']]
@@ -119,7 +121,7 @@ def parse_lines(parsed_markets, market_values, bet_type_dict, period_dict):
             #    'home_odds':home_odds, 'away_odds':away_odds
             #})
             yield ((
-                matchup, bet_type, period, date, spov, spun, sportsbook, 
+                sport, league, matchup, bet_type, period, date, spov, spun, sportsbook, 
                 home_odds, away_odds
             ))
 
