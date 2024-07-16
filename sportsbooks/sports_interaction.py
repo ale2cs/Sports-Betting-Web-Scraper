@@ -3,7 +3,7 @@ import re
 import asyncio
 
 spread_total_pattern = re.compile(r'-?\d+\.?\d*')
-multiple_game_day_pattern = re.compile(r'\(Game \d+\)')
+special_game_pattern = re.compile(r'\([^()]*\)')
 
 bet_type_dict = {
     'Money Line': 'moneyline', 
@@ -83,7 +83,7 @@ async def fetch_game_data(client, sport, league, sport_id, layout_name, competit
         resp = await client.get(single_game_url, headers=headers, params=querystring)
         single_game = resp.json()
         game_name = single_game['fixture']['name']['value'].replace(' at ', ' @ ').replace(' - ', ' @ ')
-        game_name = multiple_game_day_pattern.sub('', game_name).strip()
+        game_name = special_game_pattern.sub('', game_name).strip()
         date = single_game['fixture']['startDate']
         markets = single_game['fixture']['optionMarkets'] + single_game['fixture']['games']
         period = 0
